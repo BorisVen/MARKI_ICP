@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { Icon } from './icons';
 
 /** Public profile link that the QR code encodes. */
-export const profileUrl = (username: string) => `${window.location.origin}/?u=${encodeURIComponent(username)}`;
+export const profileUrl = (username: string) => `${window.location.origin}${import.meta.env.BASE_URL}?u=${encodeURIComponent(username)}`;
 
 const BACKGROUNDS = [
   'linear-gradient(160deg, #1f4fd1 0%, #4f8cff 45%, #22c55e 100%)',
@@ -54,7 +54,7 @@ export default function ShareProfile({ name, username, avatar, onClose }: {
         <div className="share-name">{name}</div>
         <div className="share-user">@{username}</div>
         {qr ? <img className="share-qr" src={qr} alt="QR-код профілю" /> : <div className="share-qr sk" />}
-        <div className="share-brand"><img src="/favicon.svg" alt="" width={20} height={20} /> Marki</div>
+        <div className="share-brand"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={20} height={20} /> Marki</div>
       </div>
 
       <div className="share-actions">

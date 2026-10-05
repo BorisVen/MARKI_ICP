@@ -12,7 +12,7 @@ import { GridSkeleton } from '../Skeleton';
 const nftImage = (n: NFT) => n.imageUrl || n.image || '';
 /** Public passport link in this app; the owner id lets the viewer verify it. */
 const viewerUrl = (n: NFT, ownerId: string) =>
-  `${window.location.origin}/?nft=${encodeURIComponent(n.id)}&owner=${encodeURIComponent(ownerId)}`;
+  `${window.location.origin}${import.meta.env.BASE_URL}?nft=${encodeURIComponent(n.id)}&owner=${encodeURIComponent(ownerId)}`;
 /** Short, human passport number: MK-XXXX-XXXX from the NFT id. */
 export const passportNo = (id: string) => {
   const clean = id.replace(/[^a-z0-9]/gi, '').toUpperCase().padEnd(8, '0');
