@@ -9,6 +9,7 @@ import type { PageId } from '../Shell';
 import { statusLabel } from '../status';
 import CreateGiftModal from '../gifts/CreateGiftModal';
 import { GridSkeleton } from '../Skeleton';
+import { OwnerChain, ownershipChain } from '../ownership';
 
 const nftImage = (n: NFT) => n.imageUrl || n.image || '';
 /** Public passport link in this app; the owner id lets the viewer verify it. */
@@ -25,10 +26,18 @@ type Event = { key: string; icon: string; title: string; sub?: string; at?: stri
 
 /** Passport history from real data: issue, blockchain record, NFC tag, delivery. */
 function buildHistory(nft: NFT, deliveries: Delivery[]): Event[] {
+  const chain = ownershipChain(nft);
+  const brand = chain.length > 1 ? ` ${chain[0].name}` : '';
   const events: Event[] = [
-    { key: 'issued', icon: '🏷️', title: 'Паспорт випущено брендом', sub: nft.batchName ? `Колекція «${nft.batchName}»` : undefined, at: nft.createdAt },
+    { key: 'issued', icon: '🏷️', title: `Паспорт випущено брендом${brand}`, sub: nft.batchName ? `Колекція «${nft.batchName}»` : undefined, at: nft.createdAt },
   ];
-  if (nft.giftFrom) events.push({ key: 'gift', icon: '🎁', title: `Отримано в подарунок від ${nft.giftFrom}` });
+  chain.forEach((o, i) => {
+    if (i === 0 || o.via === 'issued') return;
+    const from = chain[i - 1].name;
+    events.push(o.via === 'gift'
+      ? { key: `own-${i}`, icon: '🎁', title: `${from} подарував(ла) → ${o.name}`, at: o.at || undefined }
+      : { key: `own-${i}`, icon: '🤝', title: `${from} продав(ла) → ${o.name}`, at: o.at || undefined });
+  });
   const token = onChain(nft);
   if (token) events.push({ key: 'chain', icon: '⛓️', title: 'Записано в блокчейн Internet Computer', sub: `Токен № ${token}` });
   if (nft.nfcUid) events.push({ key: 'nfc', icon: '📲', title: 'Прив’язано NFC-мітку', sub: 'Товар можна перевірити дотиком телефону' });
@@ -131,6 +140,7 @@ function Passport({ nft, collection, history, ownerName, ownerId, onBack }: { nf
   const [copied, setCopied] = useState(false);
   const url = viewerUrl(nft, ownerId);
   const token = onChain(nft);
+  const chain = ownershipChain(nft, ownerName);
 
   useEffect(() => {
     QRCode.toDataURL(url, { width: 260, margin: 2, color: { dark: '#0b0f14', light: '#ffffff' } }).then(setQr).catch(() => {});
@@ -193,6 +203,12 @@ function Passport({ nft, collection, history, ownerName, ownerId, onBack }: { nf
           {facts.map(([k, v]) => (
             <div key={k} className="md-row"><span className="muted">{k}</span><span style={{ textAlign: 'right' }}>{v}</span></div>
           ))}
+          {chain.length > 1 && (
+            <div style={{ marginTop: 12 }}>
+              <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>Ланцюжок власників</div>
+              <OwnerChain owners={chain} />
+            </div>
+          )}
           <div className="notice notice-info" style={{ marginTop: 14, marginBottom: 0 }}>
             {nft.nfcUid
               ? 'Щоб довести оригінальність, приклади телефон до NFC-мітки на товарі або покажи QR з вкладки «Поділитися».'

@@ -5,6 +5,7 @@ import GuestPrompt from '../GuestPrompt';
 import { fmtDateTime } from '../format';
 import Logo from '../Logo';
 import { passportNo } from './MyNftsPage';
+import { OwnerChain, ownershipChain } from '../ownership';
 
 type Source =
   | { kind: 'id'; id: string; owner?: string }
@@ -78,6 +79,7 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
 
   const nft = data?.nft;
   const image = nft ? nft.imageUrl || nft.image : '';
+  const chain = nft ? ownershipChain(nft, data?.ownerName) : [];
 
   return (
     <div className="viewer-wrap">
@@ -121,6 +123,12 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
                   </div>
                 )}
                 {data.ownerName && <div className="md-row"><span className="muted">Власник</span><strong>{data.ownerName}</strong></div>}
+                {chain.length > 1 && (
+                  <div style={{ padding: '10px 0' }}>
+                    <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>Ланцюжок власників</div>
+                    <OwnerChain owners={chain} />
+                  </div>
+                )}
                 <div className="md-row"><span className="muted">Номер паспорта</span><code style={{ fontSize: 12 }}>{passportNo(nft.id)}</code></div>
                 {nft.category && <div className="md-row"><span className="muted">Категорія</span><span>{nft.category}</span></div>}
                 {nft.createdAt && <div className="md-row"><span className="muted">Випущено</span><span>{fmtDateTime(nft.createdAt)}</span></div>}

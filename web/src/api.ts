@@ -150,6 +150,8 @@ export type NFT = {
   /** Set when the NFT was received as a gift. */
   giftFrom?: string;
   giftId?: string;
+  /** Ownership chain, oldest first: issuer, then every gift or sale. */
+  owners?: OwnershipRecord[];
   /** `icp:<canister>:<token>` after an on-chain mint. */
   mintAddress?: string;
 };
@@ -435,6 +437,14 @@ export const apiPublicPassport = (ownerId: string, nftId: string) => get<PublicP
 export const apiViewProfile  = (username: string) => post<void>(`/api/public/users/${enc(username)}/view`).catch(() => {});
 export const apiViewPassport = (ownerId: string, nftId: string) => post<void>(`/api/public/nfts/${enc(ownerId)}/${enc(nftId)}/view`).catch(() => {});
 export const apiMyAnalytics  = () => get<Analytics>('/api/users/me/analytics');
+
+export interface OwnershipRecord {
+  uid: string;
+  name: string;
+  username?: string;
+  at: string;
+  via: 'issued' | 'gift' | 'sale';
+}
 
 // ── Gifts ────────────────────────────────────────────────────────────────────
 
