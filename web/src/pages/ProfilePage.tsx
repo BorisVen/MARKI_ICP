@@ -386,6 +386,7 @@ function MenuSheet({ onClose, onJumpTo }: { onClose: () => void; onJumpTo: (p: P
               {item(<Icon.Plus />, 'Створити NFT', 'Паспорт для твоєї речі', () => onJumpTo('create'))}
               {item(<Icon.Tag />, 'Тарифи', 'Пакети мінтів у блокчейні ICP', () => onJumpTo('plans'))}
               {item(<Icon.Box />, 'Мої паспорти', null, () => onJumpTo('nfts'))}
+              {item(<Icon.Gift />, 'Подарунки', 'Посилання, QR і хто забрав', () => onJumpTo('gifts'))}
             </div>
 
             <div className="drawer-caption">Статистика</div>

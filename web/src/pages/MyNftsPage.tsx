@@ -7,6 +7,7 @@ import { fmtDateTime, plural } from '../format';
 import { Icon } from '../icons';
 import type { PageId } from '../Shell';
 import { statusLabel } from '../status';
+import CreateGiftModal from '../gifts/CreateGiftModal';
 import { GridSkeleton } from '../Skeleton';
 
 const nftImage = (n: NFT) => n.imageUrl || n.image || '';
@@ -27,6 +28,7 @@ function buildHistory(nft: NFT, deliveries: Delivery[]): Event[] {
   const events: Event[] = [
     { key: 'issued', icon: '🏷️', title: 'Паспорт випущено брендом', sub: nft.batchName ? `Колекція «${nft.batchName}»` : undefined, at: nft.createdAt },
   ];
+  if (nft.giftFrom) events.push({ key: 'gift', icon: '🎁', title: `Отримано в подарунок від ${nft.giftFrom}` });
   const token = onChain(nft);
   if (token) events.push({ key: 'chain', icon: '⛓️', title: 'Записано в блокчейн Internet Computer', sub: `Токен № ${token}` });
   if (nft.nfcUid) events.push({ key: 'nfc', icon: '📲', title: 'Прив’язано NFC-мітку', sub: 'Товар можна перевірити дотиком телефону' });
@@ -69,7 +71,10 @@ export default function MyNftsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
   const withNfc = nfts.filter(n => n.nfcUid).length;
 
   if (open) {
-    return <Passport nft={open} history={buildHistory(open, deliveries)} ownerName={user?.name ?? ''} ownerId={user?.uid ?? ''} onBack={() => setOpen(null)} />;
+    // Same collection (batch) as the open passport: lets the owner gift the whole set.
+    const collection = (open.batchName ? nfts.filter(n => n.batchName === open.batchName) : [open])
+      .filter(n => !(n.editionNumber === 0 && n.editionCount));
+    return <Passport nft={open} collection={collection} history={buildHistory(open, deliveries)} ownerName={user?.name ?? ''} ownerId={user?.uid ?? ''} onBack={() => { setOpen(null); reload(); }} />;
   }
 
   return (
@@ -119,8 +124,9 @@ export default function MyNftsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
   );
 }
 
-function Passport({ nft, history, ownerName, ownerId, onBack }: { nft: NFT; history: Event[]; ownerName: string; ownerId: string; onBack: () => void }) {
+function Passport({ nft, collection, history, ownerName, ownerId, onBack }: { nft: NFT; collection: NFT[]; history: Event[]; ownerName: string; ownerId: string; onBack: () => void }) {
   const [tab, setTab] = useState<'passport' | 'history' | 'share'>('passport');
+  const [gifting, setGifting] = useState<NFT[] | null>(null);
   const [qr, setQr] = useState('');
   const [copied, setCopied] = useState(false);
   const url = viewerUrl(nft, ownerId);
@@ -167,6 +173,14 @@ function Passport({ nft, history, ownerName, ownerId, onBack }: { nft: NFT; hist
           <div className="ph-no">{passportNo(nft.id)}</div>
         </div>
       </div>
+
+      <div className="card-actions" style={{ marginTop: 14 }}>
+        <button className="btn btn-primary" onClick={() => setGifting([nft])}><Icon.Gift /> Подарувати</button>
+        {collection.length > 1 && (
+          <button className="btn" onClick={() => setGifting(collection)}><Icon.Gift /> Подарувати колекцію ({collection.length})</button>
+        )}
+      </div>
+      {gifting && <CreateGiftModal nfts={gifting} onClose={() => setGifting(null)} />}
 
       <div className="mode-tabs" role="tablist" style={{ marginTop: 16 }}>
         <button className={`mode-tab ${tab === 'passport' ? 'active' : ''}`} onClick={() => setTab('passport')}>Паспорт</button>

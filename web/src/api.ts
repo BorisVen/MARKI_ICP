@@ -140,9 +140,16 @@ export type NFT = {
   batchName?: string;
   batchIndex?: number;
   batchSize?: number;
+  /** Editions: 0 = master (original), 1..N = copies. */
+  editionNumber?: number;
+  editionCount?: number;
+  masterNftId?: string;
   qrImageUrl?: string;
   /** Passport page views (HANDOFF-public-analytics-api.md). */
   views?: number;
+  /** Set when the NFT was received as a gift. */
+  giftFrom?: string;
+  giftId?: string;
   /** `icp:<canister>:<token>` after an on-chain mint. */
   mintAddress?: string;
 };
@@ -428,6 +435,35 @@ export const apiPublicPassport = (ownerId: string, nftId: string) => get<PublicP
 export const apiViewProfile  = (username: string) => post<void>(`/api/public/users/${enc(username)}/view`).catch(() => {});
 export const apiViewPassport = (ownerId: string, nftId: string) => post<void>(`/api/public/nfts/${enc(ownerId)}/${enc(nftId)}/view`).catch(() => {});
 export const apiMyAnalytics  = () => get<Analytics>('/api/users/me/analytics');
+
+// ── Gifts ────────────────────────────────────────────────────────────────────
+
+export type GiftClaim = { nftId: string; sourceNftId: string; uid: string; name: string; username: string; claimedAt: string };
+export type Gift = {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  ownerUsername: string;
+  fromCompany: boolean;
+  title: string;
+  message: string;
+  image: string;
+  total: number;
+  remainingNftIds: string[];
+  claims: GiftClaim[];
+  status: 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+};
+export type GiftPreview = {
+  id: string; title: string; message: string; image: string; ownerName: string; ownerUsername: string;
+  fromCompany: boolean; total: number; remaining: number; status: Gift['status'];
+};
+export const apiCreateGift = (d: { nftIds: string[]; title?: string; message?: string }) => post<Gift>('/api/gifts', d);
+export const apiMyGifts    = () => get<{ sent: Gift[]; received: Gift[] }>('/api/gifts');
+export const apiCancelGift = (code: string) => del<Gift>(`/api/gifts/${enc(code)}`);
+export const apiClaimGift  = (code: string) => post<{ gift: Gift; nft: NFT }>(`/api/gifts/${enc(code)}/claim`);
+export const apiGiftPreview = (code: string) => get<GiftPreview>(`/api/public/gifts/${enc(code)}`);
 
 type FollowResult = { following: boolean; followersCount: number; followingCount: number };
 export const apiFollow   = (uid: string) => post<FollowResult>(`/api/users/${uid}/follow`);
