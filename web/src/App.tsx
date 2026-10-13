@@ -14,6 +14,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import CreateNftPage from './pages/CreateNftPage';
 import PlansPage from './pages/PlansPage';
 import NftViewerPage from './pages/NftViewerPage';
+import GoodsCheckPage from './goods/GoodsCheckPage';
+import MyGoodsPage from './goods/MyGoodsPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import GiftsPage from './gifts/GiftsPage';
 import GiftClaimPage from './gifts/GiftClaimPage';
@@ -31,12 +33,14 @@ const PAGE_TITLES: Record<PageId, string> = {
   create:        'Створити NFT',
   plans:         'Тарифи',
   gifts:         'Подарунки',
+  goods:         'Мої товари',
 };
 
 /** Pages opened from a QR code or a shared link; they work without signing in. */
 export type PublicRoute =
   | { kind: 'profile'; username: string }
   | { kind: 'gift'; code: string }
+  | { kind: 'goods'; code: string }
   | { kind: 'id'; id: string; owner?: string }
   | { kind: 'nfc'; uid: string };
 
@@ -46,6 +50,8 @@ function readPublicRoute(): PublicRoute | null {
   const u = params.get('u');
   const gift = params.get('gift');
   if (gift) return { kind: 'gift', code: gift };
+  const goods = params.get('v');
+  if (goods) return { kind: 'goods', code: goods };
   const id = params.get('nft');
   const nfc = params.get('nfc');
   if (u) return { kind: 'profile', username: u.replace(/^@/, '') };
@@ -112,6 +118,9 @@ export default function App() {
 
   if (route) {
     const askSignIn = guest ? (mode: 'login' | 'signup') => setAuthMode(mode) : undefined;
+    if (route.kind === 'goods') {
+      return <GoodsCheckPage code={route.code} onClose={closeRoute} onSignIn={askSignIn} />;
+    }
     if (route.kind === 'gift') {
       return <GiftClaimPage code={route.code} onClose={closeRoute} onSignIn={askSignIn}
         onOpenPassports={() => { closeRoute(); setPage('nfts'); }} />;
@@ -134,6 +143,7 @@ export default function App() {
       {page === 'create'        && <CreateNftPage onJumpTo={setPage} />}
       {page === 'plans'         && <PlansPage />}
       {page === 'gifts'         && <GiftsPage />}
+      {page === 'goods'         && <MyGoodsPage onOpen={code => { window.history.pushState({}, '', `?v=${encodeURIComponent(code)}`); setRoute({ kind: 'goods', code }); }} />}
     </Shell>
   );
 }

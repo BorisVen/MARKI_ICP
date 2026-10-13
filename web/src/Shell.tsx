@@ -15,6 +15,7 @@ export type PageId =
   | 'create'
   | 'plans'
   | 'gifts'
+  | 'goods'
   | 'profile';
 
 type NavItem = {
@@ -42,6 +43,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { id: 'profile', label: 'Профіль',      icon: <Icon.User />, mobile: true },
       { id: 'create',  label: 'Створити NFT', icon: <Icon.Plus /> },
       { id: 'nfts',    label: 'Мої паспорти', icon: <Icon.Box /> },
+      { id: 'goods',   label: 'Мої товари',   icon: <Icon.Box /> },
       { id: 'gifts',   label: 'Подарунки',    icon: <Icon.Gift /> },
       { id: 'plans',   label: 'Тарифи',       icon: <Icon.Tag /> },
     ],

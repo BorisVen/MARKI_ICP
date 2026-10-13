@@ -577,3 +577,88 @@ export const apiAiGenerateImage = async (prompt: string): Promise<Blob> => {
   });
   return res.blob();
 };
+
+// ── Goods authenticity (products → batches → units) ─────────────────────────
+
+export type GoodsCategory = 'wine' | 'spirits' | 'beer' | 'dairy' | 'food' | 'cosmetics' | 'other';
+export type GoodsStage = 'produced' | 'warehouse' | 'shipped' | 'in_store';
+export type GoodsEventKind = GoodsStage | 'lab' | 'note';
+
+export interface GoodsProduct {
+  id: string;
+  ownerId: string;
+  brandName: string;
+  name: string;
+  category: GoodsCategory;
+  /** 'unit': a QR per item (wine); 'batch': one QR per lot (milk). */
+  mode: 'unit' | 'batch';
+  description: string;
+  image: string;
+  attributes: Record<string, string>;
+  createdAt: string;
+}
+
+export interface GoodsBatchSummary {
+  id: string;
+  lot: string;
+  producedAt: string;
+  expiresAt: string;
+  size: number;
+  claimed: number;
+  stage: GoodsStage;
+  createdAt: string;
+}
+
+export interface GoodsEvent {
+  kind: GoodsEventKind;
+  location: string;
+  note: string;
+  actorName: string;
+  at: string;
+}
+
+export interface GoodsUnit {
+  serial: number;
+  code: string;
+  ownerId?: string;
+  ownerName?: string;
+  claimedAt?: string;
+}
+
+export interface GoodsBatch {
+  id: string;
+  productId: string;
+  ownerId: string;
+  mode: 'unit' | 'batch';
+  lot: string;
+  producedAt: string;
+  expiresAt: string;
+  attributes: Record<string, string>;
+  units: GoodsUnit[];
+  events: GoodsEvent[];
+  createdAt: string;
+}
+
+export interface GoodsVerifyView {
+  code: string;
+  mode: 'unit' | 'batch';
+  product: GoodsProduct;
+  brandVerified: boolean;
+  batchId: string;
+  lot: string;
+  producedAt: string;
+  expiresAt: string;
+  attributes: Record<string, string>;
+  batchSize: number;
+  unit?: { serial: number; claimed: boolean; claimedAt?: string; mine: boolean };
+  stage: GoodsStage;
+  events: GoodsEvent[];
+  warnings: string[];
+  scans: number;
+}
+
+export const apiGoodsPublic = (code: string) => get<GoodsVerifyView>(`/api/public/goods/${encodeURIComponent(code)}`);
+export const apiGoodsVerify = (code: string) => get<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}`);
+export const apiGoodsClaim = (code: string, receipt: string) =>
+  post<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}/claim`, { receipt });
+export const apiMyGoods = () => get<GoodsVerifyView[]>('/api/goods/mine');
