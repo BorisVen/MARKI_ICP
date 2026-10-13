@@ -90,7 +90,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
 
   const verdict = view ? summarize(view) : null;
   const cat = view ? CATEGORY[view.product.category] : null;
-  const year = view ? view.product.attributes['Рік урожаю'] || view.attributes['Рік урожаю'] : '';
+  const year = view ? view.product.attributes?.['Рік урожаю'] || view.attributes?.['Рік урожаю'] : '';
   const isDrink = view?.product.category === 'wine' || view?.product.category === 'spirits' || view?.product.category === 'beer';
 
   return (
@@ -143,7 +143,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
                       : <span className="badge badge-pending">не перевірений</span>}</span>
                   </div>
                   <div className="md-row"><span className="muted">Статус</span><strong>{view.unit?.mine ? 'Ваш' : view.unit?.claimed ? 'Продано' : STAGE[view.stage]}</strong></div>
-                  {Object.entries({ ...view.product.attributes, ...view.attributes }).map(([k, v]) => (
+                  {Object.entries({ ...(view.product.attributes ?? {}), ...(view.attributes ?? {}) }).map(([k, v]) => (
                     <div key={k} className="md-row"><span className="muted">{k}</span><span>{v}</span></div>
                   ))}
                   {view.producedAt && <div className="md-row"><span className="muted">{isDrink ? 'Розлито' : 'Вироблено'}</span><span>{view.producedAt}</span></div>}
@@ -173,7 +173,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
 
             <h2 className="gc-h2">Шлях товару</h2>
             <div className="gc-path">
-              {view.events.map((ev, i) => (
+              {(view.events ?? []).map((ev, i) => (
                 <div key={i} className="card gc-step">
                   <span className="gc-step-icon">{EVENT[ev.kind]?.icon ?? '•'}</span>
                   <div>
@@ -183,7 +183,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
                   </div>
                 </div>
               ))}
-              {view.unit?.owners.map((o, i) => (
+              {(view.unit?.owners ?? []).map((o, i) => (
                 <div key={`o${i}`} className="card gc-step">
                   <span className="gc-step-icon">{o.via === 'gift' ? '🎁' : '🧾'}</span>
                   <div>
