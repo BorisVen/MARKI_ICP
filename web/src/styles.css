@@ -2293,3 +2293,34 @@ body { -webkit-font-smoothing: antialiased; }
 .gc-regions { margin-top: 10px; font-weight: 700; font-size: 15px; color: var(--danger); }
 .gc-protection { font-size: 12px; text-align: center; margin: -4px 8px 0; }
 .gc-locate { font-size: 13px; }
+
+/* Goods check: one-screen card, fixed bar (iOS Safari drops sticky here) */
+html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
+.gc-wrap { min-height: 100dvh; padding-top: var(--topbar-h); }
+.gc-topbar { position: fixed; left: 0; right: 0; top: 0; }
+.gc-home { display: flex; align-items: center; padding: 6px 10px; border-radius: 10px; }
+.gc-home:hover { background: var(--bg-soft); }
+.goods-check { gap: 10px; padding-top: 16px; padding-bottom: 24px; }
+.gc-verdict { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid; }
+.gc-verdict > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gc-verdict strong { font-size: 18px; }
+.gc-verdict span:not(.gc-seal) { font-size: 13px; color: var(--muted); }
+.gc-seal { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; font-size: 20px; font-weight: 800; color: #fff; }
+.gc-verdict.good { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.35); }
+.gc-verdict.good .gc-seal { background: var(--success); }
+.gc-verdict.bad { background: rgba(245,165,36,0.08); border-color: rgba(245,165,36,0.4); }
+.gc-verdict.bad .gc-seal { background: var(--warn); }
+.gc-verdict.fake { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.5); }
+.gc-verdict.fake .gc-seal { background: var(--danger); }
+.gc-verdict.fake strong { color: var(--danger); }
+.gc-product { margin: 0 !important; }
+.gc-product img, .gc-icon { width: 72px; height: 72px; font-size: 34px; }
+.gc-name { font-size: 20px; margin: 0; line-height: 1.2; }
+.gc-brand { font-size: 14px; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.gc-check { width: 16px; height: 16px; border-radius: 50%; background: var(--success); color: #fff; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.gc-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.gc-facts span { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg-soft); color: var(--muted); }
+.gc-claim { margin: 0 !important; }
+.gc-link { background: none; border: none; color: var(--primary); font-size: 13px; padding: 6px 0; cursor: pointer; text-align: center; width: 100%; }
+.gc-link:disabled { color: var(--muted); }
+.gc-details { margin: 0 !important; }

@@ -83,137 +83,130 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
       .catch(() => {});
   }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ok = view && view.warnings.length === 0;
-  const verdict = !view ? null
-    : view.suspicious ? { cls: 'fake', seal: '✕', title: 'Ймовірна підробка', text: 'Не купуйте цей товар і повідомте продавця або виробника.' }
-      : ok ? { cls: 'good', seal: '✓', title: 'Код зареєстровано виробником', text: view.unit?.claimed ? `${view.product.brandName} · перевірено Marki` : `${view.product.brandName} · перевірено Marki · ще не продано` }
-        : { cls: 'bad', seal: '!', title: 'Будьте уважні', text: 'Код справжній, але є застереження:' };
+  const [details, setDetails] = useState(false);
+  const verdict = view ? summarize(view) : null;
 
   return (
-    <div className="viewer-wrap">
-      <header className="viewer-topbar">
-        <button className="btn" onClick={onClose}>← {onSignIn ? 'Marki' : 'До застосунку'}</button>
-        <Logo size={24} />
+    <div className="viewer-wrap gc-wrap">
+      <header className="viewer-topbar gc-topbar">
+        <span />
+        <button className="gc-home" onClick={onClose} aria-label="Marki — на головну"><Logo size={24} /></button>
         {onSignIn ? <button className="btn" onClick={() => onSignIn('login')}>Увійти</button> : <span />}
       </header>
 
       <div className="viewer-content goods-check">
         {!view && !error && <div className="spinner">Перевіряємо товар…</div>}
         {error && (
-          <div className="verdict bad" style={{ margin: '40px auto' }}>
-            <div className="v-seal">!</div>
-            <h2>Не підтверджено</h2>
-            <p>{error}</p>
+          <div className="gc-verdict bad">
+            <span className="gc-seal">!</span>
+            <div><strong>Не підтверджено</strong><span>{error}</span></div>
           </div>
         )}
 
-        {view && (
+        {view && verdict && (
           <>
-            <div className={`verdict ${verdict!.cls}`}>
-              <div className="v-seal">{verdict!.seal}</div>
-              <h2>{verdict!.title}</h2>
-              <p>{verdict!.text}</p>
-              {!ok && <ul className="gc-warnings">{view.warnings.map(w => <li key={w}>{w}</li>)}</ul>}
-              {view.suspicious && view.suspiciousRegions?.length ? (
-                <div className="gc-regions">{view.suspiciousRegions.map(country).join(' · ')}</div>
-              ) : null}
+            <div className={`gc-verdict ${verdict.cls}`}>
+              <span className="gc-seal">{verdict.seal}</span>
+              <div><strong>{verdict.title}</strong><span>{verdict.line}</span></div>
             </div>
-            {view.protection === 'qr' && !view.suspicious && (
-              <div className="muted gc-protection">
-                🔎 Захист: QR-код. Його можна скопіювати, тому Marki стежить, де й ким його сканують, і попередить про підробку.
-              </div>
-            )}
-            {view.unit && !view.suspicious && !view.unit.mine && (
-              place === 'done' ? (
-                <div className="muted gc-protection">📍 Місце враховано — дякуємо, так підробки ловляться навіть в одному місті.</div>
-              ) : (
-                <button className="btn btn-block gc-locate" onClick={shareLocation} disabled={place === 'asking'}>
-                  {place === 'asking' ? 'Визначаємо місце…' : place === 'denied' ? '📍 Доступ до місця заборонено — можна дозволити в налаштуваннях' : '📍 Перевірити точніше (з місцезнаходженням)'}
-                </button>
-              )
-            )}
 
             <div className="card gc-product">
               {view.product.image
                 ? <img src={view.product.image} alt={view.product.name} />
                 : <div className="gc-icon">{CATEGORY[view.product.category]?.icon ?? '📦'}</div>}
-              <div>
-                <div className="muted" style={{ fontSize: 12 }}>{CATEGORY[view.product.category]?.label}</div>
-                <h1 className="viewer-title" style={{ margin: '2px 0 4px' }}>{view.product.name}</h1>
-                <div style={{ fontSize: 14 }}>
-                  {view.product.brandName} {view.brandVerified && <span className="badge badge-success">перевірений виробник</span>}
+              <div style={{ minWidth: 0 }}>
+                <h1 className="gc-name">{view.product.name}</h1>
+                <div className="gc-brand">{view.product.brandName}{view.brandVerified && <span className="gc-check" title="Перевірений виробник">✓</span>}</div>
+                <div className="gc-facts">
+                  {view.unit && <span>№ {view.unit.serial}/{view.batchSize}</span>}
+                  <span>Партія {view.lot}</span>
+                  {view.expiresAt && <span>до {view.expiresAt}</span>}
                 </div>
               </div>
-            </div>
-
-            {view.unit?.mine && (
-              <div className="success-banner">Це ваш товар · зареєстровано {fmtDateTime(view.unit.claimedAt)}</div>
-            )}
-
-            <div className="card">
-              {view.unit && <div className="md-row"><span className="muted">Одиниця</span><strong>№ {view.unit.serial} з {view.batchSize}</strong></div>}
-              <div className="md-row"><span className="muted">Партія</span><span>{view.lot}</span></div>
-              <div className="md-row"><span className="muted">Статус</span><span>{view.unit?.claimed ? 'Продано' : STAGE[view.stage]}</span></div>
-              {view.producedAt && <div className="md-row"><span className="muted">{view.product.category === 'wine' || view.product.category === 'spirits' ? 'Розлито' : 'Вироблено'}</span><span>{view.producedAt}</span></div>}
-              {view.expiresAt && <div className="md-row"><span className="muted">Придатний до</span><span>{view.expiresAt}</span></div>}
-              {Object.entries({ ...view.product.attributes, ...view.attributes }).map(([k, v]) => (
-                <div key={k} className="md-row"><span className="muted">{k}</span><span>{v}</span></div>
-              ))}
-              {view.product.description && <p style={{ fontSize: 14, margin: '10px 0 0' }}>{view.product.description}</p>}
             </div>
 
             {transferToken && view.unit && !view.unit.mine && (
               <AcceptBox code={view.code} token={transferToken} signedIn={!!user} onSignIn={onSignIn} onAccepted={setView} />
             )}
-
             {view.unit?.mine && <HandOverBox view={view} onChange={setView} />}
-
             {view.unit && !view.unit.claimed && !view.suspicious && (
               <ClaimBox code={view.code} signedIn={!!user} onSignIn={onSignIn} onClaimed={setView} />
             )}
+            {view.unit && !view.suspicious && !view.unit.mine && place !== 'done' && (
+              <button className="gc-link" onClick={shareLocation} disabled={place === 'asking'}>
+                {place === 'asking' ? 'Визначаємо місце…' : place === 'denied' ? '📍 Доступ до місця вимкнено' : '📍 Перевірити точніше за місцем'}
+              </button>
+            )}
 
-            <h3 style={{ margin: '20px 0 8px' }}>Шлях товару</h3>
-            <div className="card passport-timeline">
-              {[...view.events].reverse().map((ev, i) => (
-                <div key={i} className="pt-item">
-                  <span className="pt-icon">{EVENT[ev.kind]?.icon ?? '•'}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{EVENT[ev.kind]?.label ?? ev.kind}{ev.location && ` · ${ev.location}`}</div>
-                    {ev.note && <div style={{ fontSize: 13 }}>{ev.note}</div>}
-                    <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(ev.at)} · {ev.actorName}</div>
-                  </div>
-                </div>
-              ))}
-              {view.unit?.claimed && view.unit.owners.length === 0 && (
-                <div className="pt-item">
-                  <span className="pt-icon">🧾</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>Продано й зареєстровано покупцем</div>
-                    <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(view.unit.claimedAt)}</div>
-                  </div>
-                </div>
-              )}
-              {view.unit?.owners.map((o, i) => (
-                <div key={i} className="pt-item">
-                  <span className="pt-icon">{o.via === 'gift' ? '🎁' : '🧾'}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>
-                      {o.via === 'gift' ? `Передано в подарунок → ${o.name || 'новий власник'}` : `Куплено й зареєстровано за чеком${o.name ? ` · ${o.name}` : ''}`}
+            <button className="gc-link" onClick={() => setDetails(d => !d)}>{details ? 'Сховати деталі ▴' : 'Деталі й шлях товару ▾'}</button>
+
+            {details && (
+              <div className="card gc-details">
+                {Object.entries({ ...view.product.attributes, ...view.attributes }).map(([k, v]) => (
+                  <div key={k} className="md-row"><span className="muted">{k}</span><span>{v}</span></div>
+                ))}
+                <div className="md-row"><span className="muted">Статус</span><span>{view.unit?.claimed ? 'Продано' : STAGE[view.stage]}</span></div>
+                {view.producedAt && <div className="md-row"><span className="muted">{view.product.category === 'wine' || view.product.category === 'spirits' ? 'Розлито' : 'Вироблено'}</span><span>{view.producedAt}</span></div>}
+                {view.product.description && <p style={{ fontSize: 14, margin: '10px 0 4px' }}>{view.product.description}</p>}
+
+                <div className="passport-timeline" style={{ marginTop: 10 }}>
+                  {[...view.events].reverse().map((ev, i) => (
+                    <div key={i} className="pt-item">
+                      <span className="pt-icon">{EVENT[ev.kind]?.icon ?? '•'}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{EVENT[ev.kind]?.label ?? ev.kind}{ev.location && ` · ${ev.location}`}</div>
+                        {ev.note && <div style={{ fontSize: 13 }}>{ev.note}</div>}
+                        <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(ev.at)}</div>
+                      </div>
                     </div>
-                    <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(o.at)}</div>
-                  </div>
+                  ))}
+                  {view.unit?.owners.map((o, i) => (
+                    <div key={`o${i}`} className="pt-item">
+                      <span className="pt-icon">{o.via === 'gift' ? '🎁' : '🧾'}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{o.via === 'gift' ? `Подаровано → ${o.name || 'новий власник'}` : 'Куплено за чеком'}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(o.at)}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            <div className="muted" style={{ fontSize: 11, textAlign: 'center', margin: '16px 0' }}>
-              Код {view.code} · перевірено {view.scans} {view.scans === 1 ? 'раз' : 'разів'}
-            </div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 10 }}>
+                  Захист: QR-код · Marki стежить, де його сканують · перевірок: {view.scans}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
     </div>
   );
+}
+
+/** One verdict and one short line: the reason that matters most. */
+function summarize(v: GoodsVerifyView): { cls: 'good' | 'bad' | 'fake'; seal: string; title: string; line: string } {
+  const f = v.flag;
+  if (v.suspicious && f?.reason === 'distance') {
+    return { cls: 'fake', seal: '✕', title: 'Ймовірна підробка', line: `Код сканували за ~${f.distanceKm} км за ${f.hours} год` };
+  }
+  if (v.suspicious) {
+    return { cls: 'fake', seal: '✕', title: 'Ймовірна підробка', line: `Код сканували одночасно: ${(f?.regions ?? v.suspiciousRegions ?? []).map(country).join(' і ')}` };
+  }
+  if (v.unit?.mine) {
+    return { cls: 'good', seal: '✓', title: 'Ваш товар', line: `Зареєстровано ${fmtDateTime(v.unit.claimedAt)}` };
+  }
+  if (v.unit?.claimed) {
+    return { cls: 'bad', seal: '!', title: 'Уже продано', line: `${(v.unit.claimedAt ?? '').slice(0, 10)} — не купуйте як новий` };
+  }
+  if (f?.reason === 'devices') {
+    return { cls: 'bad', seal: '!', title: 'Будьте уважні', line: `Сканували з ${f.devices} пристроїв, хоча ще не продано` };
+  }
+  if (v.expiresAt && v.expiresAt < new Date().toISOString().slice(0, 10)) {
+    return { cls: 'bad', seal: '!', title: 'Термін минув', line: `Придатний був до ${v.expiresAt}` };
+  }
+  if (!v.brandVerified) {
+    return { cls: 'bad', seal: '!', title: 'Код справжній', line: 'Але виробник ще не перевірений Marki' };
+  }
+  return { cls: 'good', seal: '✓', title: 'Код справжній', line: v.unit ? 'Зареєстровано виробником · ще не продано' : 'Зареєстровано виробником' };
 }
 
 /** "I bought it": the buyer photographs the fiscal receipt QR to register the item. */
@@ -256,21 +249,18 @@ function ClaimBox({ code, signedIn, onSignIn, onClaimed }: {
 
   return (
     <div className="card gc-claim">
-      <h3 style={{ margin: '0 0 4px' }}>🧾 Купили? Зареєструйте товар</h3>
-      <p className="muted" style={{ fontSize: 13, margin: '0 0 12px' }}>
-        Сфотографуйте QR-код на касовому чеку. Товар стане вашим у Marki, а всі, хто відсканує цей код пізніше, побачать, що його вже продано.
-      </p>
+      <p className="muted" style={{ fontSize: 13, margin: '0 0 10px' }}>Купили? Сфотографуйте QR на чеку — товар стане вашим.</p>
       {error && <div className="error-banner">{error}</div>}
       {!signedIn ? (
-        <button className="btn btn-primary btn-block" onClick={() => onSignIn?.('signup')}>Увійти й зареєструвати</button>
+        <button className="btn btn-primary btn-block" onClick={() => onSignIn?.('signup')}>🧾 Увійти й зареєструвати покупку</button>
       ) : (
         <>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={e => onPhoto(e.target.files?.[0])} />
           <button className="btn btn-primary btn-block" disabled={busy} onClick={() => fileRef.current?.click()}>
-            {busy ? 'Перевіряємо чек…' : '📷 Сфотографувати чек'}
+            {busy ? 'Перевіряємо чек…' : '🧾 Я купив — сфотографувати чек'}
           </button>
           {!manual ? (
-            <button className="btn btn-block" style={{ marginTop: 8 }} onClick={() => setManual(true)}>Вставити посилання з QR чека</button>
+            <button className="gc-link" onClick={() => setManual(true)}>або вставити посилання з чека</button>
           ) : (
             <div className="field" style={{ marginTop: 10 }}>
               <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://cabinet.tax.gov.ua/cashregs/check?…" />
