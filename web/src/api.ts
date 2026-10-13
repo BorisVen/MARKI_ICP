@@ -605,6 +605,8 @@ export interface GoodsBatchSummary {
   expiresAt: string;
   size: number;
   claimed: number;
+  /** Units flagged as probable copies. */
+  flagged: number;
   stage: GoodsStage;
   createdAt: string;
 }
@@ -623,8 +625,16 @@ export interface GoodsUnit {
   ownerId?: string;
   ownerName?: string;
   claimedAt?: string;
-  /** Set when the code was seen in two countries within a day. */
-  flag?: { at: string; regions: string[] };
+  /** Set when scans look like a copied label. */
+  flag?: {
+    at: string;
+    /** 'countries' and 'distance' prove a copy; 'devices' only hints at one. */
+    reason: 'countries' | 'distance' | 'devices';
+    regions: string[];
+    distanceKm?: number;
+    hours?: number;
+    devices?: number;
+  };
 }
 
 export interface GoodsBatch {
@@ -680,6 +690,12 @@ export const apiGoodsPublic = (code: string, peek?: boolean) =>
   get<GoodsVerifyView>(`/api/public/goods/${encodeURIComponent(code)}${scanQuery(peek)}`);
 export const apiGoodsVerify = (code: string, peek?: boolean) =>
   get<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}${scanQuery(peek)}`);
+/** Optional: the scan's location (the server rounds it to ~10 km). */
+export const apiGoodsLocate = (code: string, lat: number, lng: number) => {
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; } catch { /* old browser */ }
+  return post<void>(`/api/public/goods/${encodeURIComponent(code)}/locate`, { lat, lng, tz });
+};
 export const apiGoodsCreateTransfer = (code: string) =>
   post<{ token: string }>(`/api/goods/verify/${encodeURIComponent(code)}/transfer`);
 export const apiGoodsCancelTransfer = (code: string) =>

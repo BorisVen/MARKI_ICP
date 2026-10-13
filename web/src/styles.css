@@ -2292,3 +2292,4 @@ body { -webkit-font-smoothing: antialiased; }
 .verdict.fake .v-seal { background: var(--danger); box-shadow: 0 0 0 10px rgba(239,68,68,0.15); }
 .gc-regions { margin-top: 10px; font-weight: 700; font-size: 15px; color: var(--danger); }
 .gc-protection { font-size: 12px; text-align: center; margin: -4px 8px 0; }
+.gc-locate { font-size: 13px; }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import {
-  apiGoodsAcceptTransfer, apiGoodsCancelTransfer, apiGoodsClaim, apiGoodsCreateTransfer, apiGoodsPublic, apiGoodsVerify,
+  apiGoodsAcceptTransfer, apiGoodsCancelTransfer, apiGoodsClaim, apiGoodsCreateTransfer, apiGoodsLocate, apiGoodsPublic, apiGoodsVerify,
   type GoodsVerifyView,
 } from '../api';
 import { useAuth } from '../auth';
@@ -59,6 +59,30 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
     return () => window.clearInterval(timer);
   }, [code, user]);
 
+  // Optional location: catches copies sold in two cities of one country.
+  const [place, setPlace] = useState<'idle' | 'asking' | 'done' | 'denied'>('idle');
+  const shareLocation = () => {
+    if (!('geolocation' in navigator)) { setPlace('denied'); return; }
+    setPlace('asking');
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        try {
+          await apiGoodsLocate(code, pos.coords.latitude, pos.coords.longitude);
+          setPlace('done');
+          (user ? apiGoodsVerify(code, true) : apiGoodsPublic(code, true)).then(setView).catch(() => {});
+        } catch { setPlace('idle'); }
+      },
+      () => setPlace('denied'),
+      { enableHighAccuracy: false, timeout: 15_000, maximumAge: 10 * 60_000 },
+    );
+  };
+  // Someone who allowed location before shares it without another tap.
+  useEffect(() => {
+    navigator.permissions?.query({ name: 'geolocation' as PermissionName })
+      .then(p => { if (p.state === 'granted') shareLocation(); })
+      .catch(() => {});
+  }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const ok = view && view.warnings.length === 0;
   const verdict = !view ? null
     : view.suspicious ? { cls: 'fake', seal: '✕', title: 'Ймовірна підробка', text: 'Не купуйте цей товар і повідомте продавця або виробника.' }
@@ -98,6 +122,15 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
               <div className="muted gc-protection">
                 🔎 Захист: QR-код. Його можна скопіювати, тому Marki стежить, де й ким його сканують, і попередить про підробку.
               </div>
+            )}
+            {view.unit && !view.suspicious && !view.unit.mine && (
+              place === 'done' ? (
+                <div className="muted gc-protection">📍 Місце враховано — дякуємо, так підробки ловляться навіть в одному місті.</div>
+              ) : (
+                <button className="btn btn-block gc-locate" onClick={shareLocation} disabled={place === 'asking'}>
+                  {place === 'asking' ? 'Визначаємо місце…' : place === 'denied' ? '📍 Доступ до місця заборонено — можна дозволити в налаштуваннях' : '📍 Перевірити точніше (з місцезнаходженням)'}
+                </button>
+              )
             )}
 
             <div className="card gc-product">
