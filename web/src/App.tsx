@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth, isBanned } from './auth';
 import Login from './Login';
 import Register from './Register';
@@ -11,8 +11,9 @@ import FeedPage from './pages/FeedPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import CreateNftPage from './pages/CreateNftPage';
-import PlansPage from './pages/PlansPage';
+// ICP wallet code is heavy and only these pages need it: load them on demand.
+const CreateNftPage = lazy(() => import('./pages/CreateNftPage'));
+const PlansPage = lazy(() => import('./pages/PlansPage'));
 import NftViewerPage from './pages/NftViewerPage';
 import GoodsCheckPage from './goods/GoodsCheckPage';
 import MyGoodsPage from './goods/MyGoodsPage';
@@ -140,8 +141,8 @@ export default function App() {
       {page === 'notifications' && <NotificationsPage />}
       {page === 'profile'       && <ProfilePage onJumpTo={setPage} />}
       {page === 'analytics'     && <AnalyticsPage onJumpTo={setPage} />}
-      {page === 'create'        && <CreateNftPage onJumpTo={setPage} />}
-      {page === 'plans'         && <PlansPage />}
+      {page === 'create'        && <Suspense fallback={<div className="spinner">Завантаження…</div>}><CreateNftPage onJumpTo={setPage} /></Suspense>}
+      {page === 'plans'         && <Suspense fallback={<div className="spinner">Завантаження…</div>}><PlansPage /></Suspense>}
       {page === 'gifts'         && <GiftsPage />}
       {page === 'goods'         && <MyGoodsPage onOpen={code => { window.history.pushState({}, '', `?v=${encodeURIComponent(code)}`); setRoute({ kind: 'goods', code }); }} />}
     </Shell>

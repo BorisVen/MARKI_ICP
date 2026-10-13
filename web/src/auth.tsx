@@ -14,6 +14,8 @@ type AuthState = {
   fbUser: FbUser | null;
   user: User | null;
   loading: boolean;
+  /** Firebase knows whether someone is signed in (the profile may still be loading). */
+  authReady: boolean;
   error: string | null;
   /** Signed in with Firebase but no Marki profile yet: show the sign-up form. */
   needsRegistration: boolean;
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fbUser,
     user,
     loading: !authReady || profileLoading,
+    authReady,
     error,
     needsRegistration,
     reload: fetchProfile,

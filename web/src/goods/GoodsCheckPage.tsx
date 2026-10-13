@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import {
   apiGoodsAcceptTransfer, apiGoodsCancelTransfer, apiGoodsClaim, apiGoodsCreateTransfer, apiGoodsLocate, apiGoodsPublic, apiGoodsVerify,
@@ -12,6 +11,8 @@ import { CATEGORY, EVENT, STAGE } from './labels';
 
 /** Reads the first QR code in a photo (the fiscal receipt). */
 async function readQrFromPhoto(file: File): Promise<string | null> {
+  // Loaded on demand: only buyers registering a receipt need the QR reader.
+  const { default: jsQR } = await import('jsqr');
   const bitmap = await createImageBitmap(file);
   // Large phone photos are scaled down: faster, and jsQR copes better.
   const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
@@ -44,11 +45,15 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
   /** Present for guests: asks the app to show the sign-in screen. */
   onSignIn?: (mode: 'login' | 'signup') => void;
 }) {
-  const { user } = useAuth();
+  // The API token only needs Firebase sign-in, not the Marki profile: waiting for
+  // it (not the profile) avoids a guest fetch followed by a signed-in one.
+  const { fbUser, authReady } = useAuth();
+  const user = fbUser;
   const [view, setView] = useState<GoodsVerifyView | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authReady) return;
     setError(null);
     const load = (peek: boolean) => (user ? apiGoodsVerify(code, peek) : apiGoodsPublic(code, peek));
     load(false)
@@ -57,7 +62,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
     // While the page is open, re-check quietly: a clone found elsewhere shows up here too.
     const timer = window.setInterval(() => { load(true).then(setView).catch(() => {}); }, 20_000);
     return () => window.clearInterval(timer);
-  }, [code, user]);
+  }, [code, user?.uid, authReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Optional location: catches copies sold in two cities of one country.
   const [place, setPlace] = useState<'idle' | 'asking' | 'done' | 'denied'>('idle');
@@ -188,13 +193,6 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
                   </div>
                 </div>
               ))}
-              <div className="card gc-step">
-                <span className="gc-step-icon">🔎</span>
-                <div>
-                  <strong>Захист: QR-код</strong>
-                  <span>Marki стежить за скануваннями й попередить про копію</span>
-                </div>
-              </div>
             </div>
           </>
         )}
