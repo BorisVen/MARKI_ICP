@@ -678,7 +678,6 @@ export interface GoodsVerifyView {
   flag?: GoodsUnit['flag'];
   /** 'qr' today; 'nfc' for signed chips later. */
   protection: 'qr' | 'nfc';
-  scans: number;
 }
 
 /** The phone's time zone tells the server which country a scan came from. */

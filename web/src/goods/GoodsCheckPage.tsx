@@ -91,8 +91,11 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
   return (
     <div className="viewer-wrap gc-wrap">
       <header className="viewer-topbar gc-topbar">
-        <span />
-        <button className="gc-home" onClick={onClose} aria-label="Marki — на головну"><Logo size={24} /></button>
+        <nav className="gc-nav">
+          <button className="gc-home" onClick={onClose} aria-label="Marki — на головну"><Logo size={26} /></button>
+          <button className="gc-navlink" onClick={onClose}>Головна</button>
+          <span className="gc-navlink active">Перевірка товару</span>
+        </nav>
         {onSignIn ? <button className="btn" onClick={() => onSignIn('login')}>Увійти</button> : <span />}
       </header>
 
@@ -107,12 +110,10 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
 
         {view && verdict && cat && (
           <>
-            <div className="gc-hero">
-              <div className="gc-photo">
-                {view.product.image
-                  ? <img src={view.product.image} alt={view.product.name} />
-                  : <div className="gc-photo-empty">{cat.icon}</div>}
-              </div>
+            <div className={`gc-hero ${view.product.image ? '' : 'no-photo'}`}>
+              {view.product.image && (
+                <div className="gc-photo"><img src={view.product.image} alt={view.product.name} /></div>
+              )}
 
               <div className="gc-info">
                 <div className={`gc-pill ${verdict.cls}`}>
@@ -120,9 +121,14 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
                   <div><strong>{verdict.title}</strong>{verdict.line && <span>{verdict.line}</span>}</div>
                 </div>
 
-                <div className="gc-kicker">Цифровий паспорт товару</div>
-                <h1 className="gc-title">{view.product.name}</h1>
-                <div className="gc-sub">{[view.product.brandName, cat.label, year].filter(Boolean).join(' · ')}</div>
+                <div className="gc-head">
+                  <div style={{ minWidth: 0 }}>
+                    <div className="gc-kicker">Цифровий паспорт товару</div>
+                    <h1 className="gc-title">{view.product.name}</h1>
+                    <div className="gc-sub">{[view.product.brandName, cat.label, year].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  <div className="gc-cat">{cat.icon}</div>
+                </div>
 
                 <div className="card gc-table">
                   <div className="md-row">
@@ -186,8 +192,7 @@ export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn 
                 <span className="gc-step-icon">🔎</span>
                 <div>
                   <strong>Захист: QR-код</strong>
-                  <span>Marki стежить, де й ким його сканують</span>
-                  <small>Перевірок: {view.scans}</small>
+                  <span>Marki стежить за скануваннями й попередить про копію</span>
                 </div>
               </div>
             </div>
