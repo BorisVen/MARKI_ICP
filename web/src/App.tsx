@@ -40,7 +40,7 @@ const PAGE_TITLES: Record<PageId, string> = {
 export type PublicRoute =
   | { kind: 'profile'; username: string }
   | { kind: 'gift'; code: string }
-  | { kind: 'goods'; code: string }
+  | { kind: 'goods'; code: string; transfer?: string }
   | { kind: 'id'; id: string; owner?: string }
   | { kind: 'nfc'; uid: string };
 
@@ -51,7 +51,7 @@ function readPublicRoute(): PublicRoute | null {
   const gift = params.get('gift');
   if (gift) return { kind: 'gift', code: gift };
   const goods = params.get('v');
-  if (goods) return { kind: 'goods', code: goods };
+  if (goods) return { kind: 'goods', code: goods, transfer: params.get('t') ?? undefined };
   const id = params.get('nft');
   const nfc = params.get('nfc');
   if (u) return { kind: 'profile', username: u.replace(/^@/, '') };
@@ -119,7 +119,7 @@ export default function App() {
   if (route) {
     const askSignIn = guest ? (mode: 'login' | 'signup') => setAuthMode(mode) : undefined;
     if (route.kind === 'goods') {
-      return <GoodsCheckPage code={route.code} onClose={closeRoute} onSignIn={askSignIn} />;
+      return <GoodsCheckPage code={route.code} transferToken={route.transfer} onClose={closeRoute} onSignIn={askSignIn} />;
     }
     if (route.kind === 'gift') {
       return <GiftClaimPage code={route.code} onClose={closeRoute} onSignIn={askSignIn}

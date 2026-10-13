@@ -2288,3 +2288,7 @@ body { -webkit-font-smoothing: antialiased; }
 .gc-claim { border-color: var(--primary); }
 .gp-batch { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--border); color: var(--text); cursor: pointer; font: inherit; width: 100%; }
 .gp-batch:hover { border-color: var(--primary); }
+.verdict.fake { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.45); }
+.verdict.fake .v-seal { background: var(--danger); box-shadow: 0 0 0 10px rgba(239,68,68,0.15); }
+.gc-regions { margin-top: 10px; font-weight: 700; font-size: 15px; color: var(--danger); }
+.gc-protection { font-size: 12px; text-align: center; margin: -4px 8px 0; }

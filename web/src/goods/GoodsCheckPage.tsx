@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
-import { apiGoodsClaim, apiGoodsPublic, apiGoodsVerify, type GoodsVerifyView } from '../api';
+import QRCode from 'qrcode';
+import {
+  apiGoodsAcceptTransfer, apiGoodsCancelTransfer, apiGoodsClaim, apiGoodsCreateTransfer, apiGoodsPublic, apiGoodsVerify,
+  type GoodsVerifyView,
+} from '../api';
 import { useAuth } from '../auth';
 import { fmtDateTime } from '../format';
 import Logo from '../Logo';
@@ -20,9 +24,22 @@ async function readQrFromPhoto(file: File): Promise<string | null> {
   return jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
 }
 
-/** Public check page opened from a product QR (`?v=CODE`). */
-export default function GoodsCheckPage({ code, onClose, onSignIn }: {
+const COUNTRY: Record<string, string> = {
+  UA: 'Україна', ES: 'Іспанія', PL: 'Польща', DE: 'Німеччина', FR: 'Франція', IT: 'Італія', PT: 'Португалія',
+  GB: 'Велика Британія', CZ: 'Чехія', SK: 'Словаччина', HU: 'Угорщина', RO: 'Румунія', MD: 'Молдова', AT: 'Австрія',
+  NL: 'Нідерланди', BE: 'Бельгія', CH: 'Швейцарія', TR: 'Туреччина', LT: 'Литва', LV: 'Латвія', EE: 'Естонія',
+  GE: 'Грузія', GR: 'Греція', BG: 'Болгарія', IE: 'Ірландія', SE: 'Швеція', NO: 'Норвегія', DK: 'Данія', FI: 'Фінляндія', AE: 'ОАЕ',
+};
+const country = (r: string) => COUNTRY[r] ?? r.split('/').pop()?.replace(/_/g, ' ') ?? r;
+
+/** Link that hands an item over to someone else (gift). */
+const transferUrl = (code: string, token: string) =>
+  `${window.location.origin}${import.meta.env.BASE_URL}?v=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}`;
+
+/** Public check page opened from a product QR (`?v=CODE`, `&t=TOKEN` for a handover). */
+export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn }: {
   code: string;
+  transferToken?: string;
   onClose: () => void;
   /** Present for guests: asks the app to show the sign-in screen. */
   onSignIn?: (mode: 'login' | 'signup') => void;
@@ -33,12 +50,20 @@ export default function GoodsCheckPage({ code, onClose, onSignIn }: {
 
   useEffect(() => {
     setError(null);
-    (user ? apiGoodsVerify(code) : apiGoodsPublic(code))
+    const load = (peek: boolean) => (user ? apiGoodsVerify(code, peek) : apiGoodsPublic(code, peek));
+    load(false)
       .then(setView)
       .catch(e => setError(e?.status === 404 ? 'Такого коду немає в Marki. Можливо, це підробка або код пошкоджено.' : 'Не вдалося перевірити. Спробуй пізніше.'));
+    // While the page is open, re-check quietly: a clone found elsewhere shows up here too.
+    const timer = window.setInterval(() => { load(true).then(setView).catch(() => {}); }, 20_000);
+    return () => window.clearInterval(timer);
   }, [code, user]);
 
   const ok = view && view.warnings.length === 0;
+  const verdict = !view ? null
+    : view.suspicious ? { cls: 'fake', seal: '✕', title: 'Ймовірна підробка', text: 'Не купуйте цей товар і повідомте продавця або виробника.' }
+      : ok ? { cls: 'good', seal: '✓', title: 'Код зареєстровано виробником', text: view.unit?.claimed ? `${view.product.brandName} · перевірено Marki` : `${view.product.brandName} · перевірено Marki · ще не продано` }
+        : { cls: 'bad', seal: '!', title: 'Будьте уважні', text: 'Код справжній, але є застереження:' };
 
   return (
     <div className="viewer-wrap">
@@ -60,12 +85,20 @@ export default function GoodsCheckPage({ code, onClose, onSignIn }: {
 
         {view && (
           <>
-            <div className={`verdict ${ok ? 'good' : 'bad'}`}>
-              <div className="v-seal">{ok ? '✓' : '!'}</div>
-              <h2>{ok ? 'Оригінал' : 'Будьте уважні'}</h2>
-              <p>{ok ? `Товар зареєстровано виробником ${view.product.brandName} у Marki.` : 'Код справжній, але є застереження:'}</p>
+            <div className={`verdict ${verdict!.cls}`}>
+              <div className="v-seal">{verdict!.seal}</div>
+              <h2>{verdict!.title}</h2>
+              <p>{verdict!.text}</p>
               {!ok && <ul className="gc-warnings">{view.warnings.map(w => <li key={w}>{w}</li>)}</ul>}
+              {view.suspicious && view.suspiciousRegions?.length ? (
+                <div className="gc-regions">{view.suspiciousRegions.map(country).join(' · ')}</div>
+              ) : null}
             </div>
+            {view.protection === 'qr' && !view.suspicious && (
+              <div className="muted gc-protection">
+                🔎 Захист: QR-код. Його можна скопіювати, тому Marki стежить, де й ким його сканують, і попередить про підробку.
+              </div>
+            )}
 
             <div className="card gc-product">
               {view.product.image
@@ -96,7 +129,13 @@ export default function GoodsCheckPage({ code, onClose, onSignIn }: {
               {view.product.description && <p style={{ fontSize: 14, margin: '10px 0 0' }}>{view.product.description}</p>}
             </div>
 
-            {view.unit && !view.unit.claimed && (
+            {transferToken && view.unit && !view.unit.mine && (
+              <AcceptBox code={view.code} token={transferToken} signedIn={!!user} onSignIn={onSignIn} onAccepted={setView} />
+            )}
+
+            {view.unit?.mine && <HandOverBox view={view} onChange={setView} />}
+
+            {view.unit && !view.unit.claimed && !view.suspicious && (
               <ClaimBox code={view.code} signedIn={!!user} onSignIn={onSignIn} onClaimed={setView} />
             )}
 
@@ -112,7 +151,7 @@ export default function GoodsCheckPage({ code, onClose, onSignIn }: {
                   </div>
                 </div>
               ))}
-              {view.unit?.claimed && (
+              {view.unit?.claimed && view.unit.owners.length === 0 && (
                 <div className="pt-item">
                   <span className="pt-icon">🧾</span>
                   <div>
@@ -121,6 +160,17 @@ export default function GoodsCheckPage({ code, onClose, onSignIn }: {
                   </div>
                 </div>
               )}
+              {view.unit?.owners.map((o, i) => (
+                <div key={i} className="pt-item">
+                  <span className="pt-icon">{o.via === 'gift' ? '🎁' : '🧾'}</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>
+                      {o.via === 'gift' ? `Передано в подарунок → ${o.name || 'новий власник'}` : `Куплено й зареєстровано за чеком${o.name ? ` · ${o.name}` : ''}`}
+                    </div>
+                    <div className="muted" style={{ fontSize: 11 }}>{fmtDateTime(o.at)}</div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="muted" style={{ fontSize: 11, textAlign: 'center', margin: '16px 0' }}>
@@ -196,6 +246,87 @@ function ClaimBox({ code, signedIn, onSignIn, onClaimed }: {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/** The owner hands the item over (gift): a link + QR for the receiver. */
+function HandOverBox({ view, onChange }: { view: GoodsVerifyView; onChange: (v: GoodsVerifyView) => void }) {
+  const token = view.unit?.transferToken;
+  const [busy, setBusy] = useState(false);
+  const [qr, setQr] = useState('');
+  const [copied, setCopied] = useState(false);
+  const url = token ? transferUrl(view.code, token) : '';
+
+  useEffect(() => {
+    if (url) QRCode.toDataURL(url, { width: 300, margin: 1 }).then(setQr).catch(() => {});
+  }, [url]);
+
+  const setToken = (t?: string) => onChange({ ...view, unit: view.unit && { ...view.unit, transferToken: t } });
+  const create = async () => {
+    setBusy(true);
+    try { setToken((await apiGoodsCreateTransfer(view.code)).token); } catch (e: any) { alert(e?.message ?? 'Не вдалося'); } finally { setBusy(false); }
+  };
+  const cancel = async () => {
+    setBusy(true);
+    try { await apiGoodsCancelTransfer(view.code); setToken(undefined); } catch (e: any) { alert(e?.message ?? 'Не вдалося'); } finally { setBusy(false); }
+  };
+  const copy = async () => { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); };
+
+  return (
+    <div className="card">
+      <h3 style={{ margin: '0 0 4px' }}>🎁 Подарувати або передати</h3>
+      {!token ? (
+        <>
+          <p className="muted" style={{ fontSize: 13, margin: '0 0 12px' }}>
+            Створіть посилання для того, кому даруєте. Після прийняття товар стане його, а сканування в іншій країні не вважатимуться підробкою.
+          </p>
+          <button className="btn btn-primary btn-block" onClick={create} disabled={busy}>Створити посилання</button>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center' }}>
+          <p className="muted" style={{ fontSize: 13 }}>Надішліть посилання або покажіть QR отримувачу.</p>
+          {qr && <img src={qr} alt="QR передачі" className="gift-qr" />}
+          <div className="copy-row" style={{ marginTop: 10 }}>
+            <code>{url.replace(/^https?:\/\//, '')}</code>
+            <button className="btn" onClick={copy}>{copied ? 'Скопійовано' : 'Копіювати'}</button>
+          </div>
+          <button className="btn ghost-danger" style={{ marginTop: 8 }} onClick={cancel} disabled={busy}>Скасувати передачу</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The receiver of a handover link takes the item. */
+function AcceptBox({ code, token, signedIn, onSignIn, onAccepted }: {
+  code: string; token: string; signedIn: boolean;
+  onSignIn?: (mode: 'login' | 'signup') => void;
+  onAccepted: (v: GoodsVerifyView) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const accept = async () => {
+    if (!signedIn) { onSignIn?.('signup'); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      onAccepted(await apiGoodsAcceptTransfer(code, token));
+      window.history.replaceState({}, '', `?v=${encodeURIComponent(code)}`);
+    } catch (e: any) {
+      setError(e?.message ?? 'Не вдалося прийняти');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="card gc-claim">
+      <h3 style={{ margin: '0 0 4px' }}>🎁 Вам передають цей товар</h3>
+      <p className="muted" style={{ fontSize: 13, margin: '0 0 12px' }}>Прийміть — і товар стане вашим у Marki з усією історією.</p>
+      {error && <div className="error-banner">{error}</div>}
+      <button className="btn btn-primary btn-block" onClick={accept} disabled={busy}>
+        {busy ? 'Приймаємо…' : signedIn ? 'Прийняти' : 'Увійти й прийняти'}
+      </button>
     </div>
   );
 }

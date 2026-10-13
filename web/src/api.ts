@@ -623,6 +623,8 @@ export interface GoodsUnit {
   ownerId?: string;
   ownerName?: string;
   claimedAt?: string;
+  /** Set when the code was seen in two countries within a day. */
+  flag?: { at: string; regions: string[] };
 }
 
 export interface GoodsBatch {
@@ -650,15 +652,40 @@ export interface GoodsVerifyView {
   expiresAt: string;
   attributes: Record<string, string>;
   batchSize: number;
-  unit?: { serial: number; claimed: boolean; claimedAt?: string; mine: boolean };
+  unit?: {
+    serial: number; claimed: boolean; claimedAt?: string; mine: boolean;
+    owners: { name: string; at: string; via: 'receipt' | 'gift' }[];
+    /** The owner's pending handover token (only for the owner). */
+    transferToken?: string;
+  };
   stage: GoodsStage;
   events: GoodsEvent[];
   warnings: string[];
+  /** Seen in two countries at once: very likely a copied label. */
+  suspicious: boolean;
+  suspiciousRegions?: string[];
+  /** 'qr' today; 'nfc' for signed chips later. */
+  protection: 'qr' | 'nfc';
   scans: number;
 }
 
-export const apiGoodsPublic = (code: string) => get<GoodsVerifyView>(`/api/public/goods/${encodeURIComponent(code)}`);
-export const apiGoodsVerify = (code: string) => get<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}`);
+/** The phone's time zone tells the server which country a scan came from. */
+const scanQuery = (peek?: boolean) => {
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; } catch { /* old browser */ }
+  return `?tz=${encodeURIComponent(tz)}${peek ? '&peek=1' : ''}`;
+};
+/** `peek` re-checks without counting a scan (the open page polls). */
+export const apiGoodsPublic = (code: string, peek?: boolean) =>
+  get<GoodsVerifyView>(`/api/public/goods/${encodeURIComponent(code)}${scanQuery(peek)}`);
+export const apiGoodsVerify = (code: string, peek?: boolean) =>
+  get<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}${scanQuery(peek)}`);
+export const apiGoodsCreateTransfer = (code: string) =>
+  post<{ token: string }>(`/api/goods/verify/${encodeURIComponent(code)}/transfer`);
+export const apiGoodsCancelTransfer = (code: string) =>
+  del<void>(`/api/goods/verify/${encodeURIComponent(code)}/transfer`);
+export const apiGoodsAcceptTransfer = (code: string, token: string) =>
+  post<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}/accept`, { token });
 export const apiGoodsClaim = (code: string, receipt: string) =>
   post<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}/claim`, { receipt });
 export const apiMyGoods = () => get<GoodsVerifyView[]>('/api/goods/mine');
