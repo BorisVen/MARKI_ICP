@@ -92,6 +92,8 @@ export type User = {
   likesCount?: number;
   savedPosts?: string[];
   repostedPosts?: string[];
+  /** Linked Plug principal: where gifted tokens are sent on-chain. */
+  icpPrincipal?: string;
 };
 
 export type PublicProfile = {
@@ -756,3 +758,19 @@ export const apiDeclineGiftRequest = (id: string) => post<GiftRequest>(`/api/gif
 /** Mark (or unmark) NFTs as a gift collection. */
 export const apiSetGiftCollection = (nftIds: string[], value: boolean) =>
   post<{ changed: number }>('/api/nfts/gift-collection', { nftIds, value });
+
+// ── On-chain handover of gifted NFTs ────────────────────────────────────────
+
+/** Link (or with `null` unlink) the Plug principal that receives gifted tokens. */
+export const apiLinkIcpPrincipal = (principal: string | null) => put<void>('/api/me/icp-principal', { principal });
+export type PendingOnchain = {
+  /** `icp:<canister>:<token>` */
+  mintAddress: string;
+  nftTitle: string;
+  toUid: string;
+  toName: string;
+  toPrincipal?: string;
+  givenAt: string;
+};
+/** NFTs I gave away whose tokens may still sit in my wallet. */
+export const apiOnchainPending = () => get<PendingOnchain[]>('/api/onchain/pending');

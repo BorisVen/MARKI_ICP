@@ -2393,3 +2393,8 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .gift-request { margin-top: 16px; border-color: #fe2c55; }
 .gift-request .gr-head { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
 .req-facts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: 10px; }
+.onchain-card { margin-bottom: 14px; }
+.onchain-card .oc-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.onchain-card .oc-title { font-weight: 600; font-size: 15px; }
+.onchain-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 220px; overflow-y: auto; font-size: 13px; }
+.onchain-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
