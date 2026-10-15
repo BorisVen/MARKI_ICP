@@ -3,6 +3,7 @@ import { apiCreateEditionNFTs, apiCreateNFT, apiCreatePost, apiUpdateNFT } from 
 import { useAuth } from '../auth';
 import { Icon } from '../icons';
 import { friendlyIcpError } from '../icp/errors';
+import { custodyAccount } from '../icp/custody';
 import { cyclesToUsd, ICP_MINT_ENABLED, icpMintAddress, mintPhotoOnChain, type OnChainMint } from '../icp/mint';
 import PlanMeter from '../icp/PlanMeter';
 import { useSubscription } from '../icp/useSubscription';
@@ -94,7 +95,7 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
 
       // On-chain first: the canister takes the plan credits, so no plan means no NFT.
       const mint = ICP_MINT_ENABLED && wallet
-        ? await mintPhotoOnChain(wallet, image, metadata, copies, t => setBusy(t))
+        ? await mintPhotoOnChain(wallet, image, metadata, copies, t => setBusy(t), user ? await custodyAccount(user.uid) : null)
         : null;
 
       setBusy('Зберігаємо паспорт…');
