@@ -6,6 +6,7 @@ import { fmtDateTime } from '../format';
 import Logo from '../Logo';
 import { passportNo } from './MyNftsPage';
 import { OwnerChain, ownershipChain } from '../ownership';
+import RequestGiftBox from '../gifts/RequestGiftBox';
 
 type Source =
   | { kind: 'id'; id: string; owner?: string }
@@ -26,6 +27,8 @@ type Loaded = {
   /** True when the backend confirmed the NFT sits in the owner's Marki wallet. */
   verified: boolean;
 };
+
+const ownerOf = (s: Source) => (s.kind === 'id' ? s.owner : undefined);
 
 /** Public passport page opened from a QR code, an NFC tag or a shared link. */
 export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
@@ -153,6 +156,10 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {nft.giftCollection && (nft.ownerId || ownerOf(source)) && (nft.ownerId || ownerOf(source)) !== user?.uid && (
+                <RequestGiftBox ownerId={(nft.ownerId || ownerOf(source))!} nftId={nft.id} signedIn={!!user} onSignIn={onSignIn} />
               )}
             </div>
           </div>

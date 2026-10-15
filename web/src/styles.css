@@ -2390,3 +2390,6 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 }
 .group-share-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: 260px; overflow-y: auto; text-align: left; }
 .group-share-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+.gift-request { margin-top: 16px; border-color: #fe2c55; }
+.gift-request .gr-head { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+.req-facts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: 10px; }

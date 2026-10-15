@@ -150,6 +150,10 @@ export type NFT = {
   /** Set when the NFT was received as a gift. */
   giftFrom?: string;
   giftId?: string;
+  /** Minted as a gift collection: visitors may ask the owner for it. */
+  giftCollection?: boolean;
+  /** Wallet owner's uid (set by the API). */
+  ownerId?: string;
   /** Ownership chain, oldest first: issuer, then every gift or sale. */
   owners?: OwnershipRecord[];
   /** `icp:<canister>:<token>` after an on-chain mint. */
@@ -718,3 +722,28 @@ export const apiGoodsAcceptTransfer = (code: string, token: string) =>
 export const apiGoodsClaim = (code: string, receipt: string) =>
   post<GoodsVerifyView>(`/api/goods/verify/${encodeURIComponent(code)}/claim`, { receipt });
 export const apiMyGoods = () => get<GoodsVerifyView[]>('/api/goods/mine');
+
+// ── Gift requests: ask the owner for a gift-collection NFT ──────────────────
+
+export type GiftRequest = {
+  id: string;
+  ownerId: string;
+  nftId: string;
+  nftTitle: string;
+  nftImage: string;
+  requesterId: string;
+  requesterName: string;
+  requesterUsername: string;
+  /** YYYY-MM-DD */
+  boughtOn: string;
+  boughtAt: string;
+  comment: string;
+  status: 'pending' | 'approved' | 'declined';
+  createdAt: string;
+  decidedAt?: string;
+};
+export const apiCreateGiftRequest = (d: { ownerId: string; nftId: string; boughtOn: string; boughtAt?: string; comment?: string }) =>
+  post<GiftRequest>('/api/gift-requests', d);
+export const apiGiftRequests = () => get<{ incoming: GiftRequest[]; outgoing: GiftRequest[] }>('/api/gift-requests');
+export const apiApproveGiftRequest = (id: string) => post<GiftRequest>(`/api/gift-requests/${encodeURIComponent(id)}/approve`);
+export const apiDeclineGiftRequest = (id: string) => post<GiftRequest>(`/api/gift-requests/${encodeURIComponent(id)}/decline`);
