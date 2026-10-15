@@ -1,3 +1,4 @@
+import { TOKEN } from '../icp/wallet';
 import { useCallback, useEffect, useState } from 'react';
 import { Principal } from '@dfinity/principal';
 import { Icon } from '../icons';
@@ -181,7 +182,7 @@ export default function PricingPage() {
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 <WalletConnect />
-                <span>Баланс: <strong>{balance === null ? '…' : fmtIcp(balance, 4)} ICP</strong></span>
+                <span>Баланс: <strong>{balance === null ? '…' : fmtIcp(balance, 4)} {TOKEN}</strong></span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn" onClick={refreshAll} disabled={!!busy}><Icon.Refresh /> Оновити</button>
@@ -218,7 +219,7 @@ export default function PricingPage() {
           const need = q.price_e8s + 2n * fee;
           const notEnough = balance !== null && balance < need;
           const label = !wallet ? 'Підключи гаманець'
-            : notEnough ? 'Недостатньо ICP'
+            : notEnough ? `Недостатньо ${TOKEN}`
             : current ? `Продовжити «${p.name}»` : `Обрати «${p.name}»`;
           return (
             <div key={p.id} className={`card plan-card ${featured ? 'featured' : ''}`}>
@@ -232,7 +233,7 @@ export default function PricingPage() {
                   {fmtUsd(p.price_usd_cents)}
                   <span className="muted" style={{ fontSize: 14, fontWeight: 400 }}> / міс</span>
                 </div>
-                <div className="muted" style={{ fontSize: 12 }}>≈ {fmtIcp(q.price_e8s, 2)} ICP · {perNft(q)} за NFT з фото</div>
+                <div className="muted" style={{ fontSize: 12 }}>≈ {fmtIcp(q.price_e8s, 2)} {TOKEN} · {perNft(q)} за NFT з фото</div>
               </div>
               <ul className="plan-features">
                 <li><span><strong>{fmtNum(p.photo_mints)}</strong> NFT з фото (до {fmtSize(p.max_photo_kb)})</span></li>
