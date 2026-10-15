@@ -164,6 +164,11 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
               {nft.giftCollection && (nft.ownerId || ownerOf(source)) && (nft.ownerId || ownerOf(source)) !== user?.uid && (
                 <RequestGiftBox ownerId={(nft.ownerId || ownerOf(source))!} nftId={nft.id} signedIn={!!user} onSignIn={onSignIn} />
               )}
+              {nft.giftCollection && (nft.ownerId || ownerOf(source)) === user?.uid && (
+                <div className="notice notice-info" style={{ marginTop: 16 }}>
+                  🎁 Це ваш подарунковий NFT. Інші люди за цим QR побачать кнопку «Запросити отримання подарунка», а запити прийдуть у «Подарунки» → «Запити».
+                </div>
+              )}
             </div>
           </div>
         )}

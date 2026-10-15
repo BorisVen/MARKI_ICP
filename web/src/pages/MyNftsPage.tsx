@@ -201,7 +201,7 @@ function Passport({ nft, collection, reserved, history, ownerName, ownerId, onBa
             if (!confirm(`Зробити «${nft.batchName || nft.title}» подарунковою (${collection.length} NFT)? За QR паспорта люди зможуть запросити подарунок, а ви — видати.`)) return;
             try { await apiSetGiftCollection(collection.map(n => n.id), true); onGifted(); } catch (e: any) { alert(e?.message ?? 'Не вдалося'); }
           }}>🎁 Зробити подарунковою</button>
-        ) : <span className="badge badge-info">🎁 Подарункова колекція</span>}
+        ) : <span className="badge badge-info" title="Інші за QR паспорта бачать кнопку «Запросити подарунок»">🎁 Подарункова · запити в «Подарунки»</span>}
         {collection.length > 1 && (
           <button className="btn" disabled={free.length === 0} onClick={() => setGifting(free)}>
             <Icon.Gift /> Нова підколекція · вільно {free.length} з {collection.length}
