@@ -425,7 +425,11 @@ export type PublicUserCard = {
   isFollowing?: boolean;
 };
 export type PublicNft = { id: string; title: string; image?: string; batchName?: string; createdAt?: string; views?: number; nfcUid?: string | null; hasNfc?: boolean };
-export type PublicPassport = { issuedByIdenity: boolean; issuerVerified: boolean; issuerName: string; ownerName?: string; nft: NFT };
+export type PublicPassport = {
+  issuedByIdenity: boolean; issuerVerified: boolean; issuerName: string; ownerName?: string; nft: NFT;
+  /** The QR's NFT was given or sold since: where it is now. */
+  movedTo?: { ownerId: string; nftId: string };
+};
 export type Analytics = {
   profileViews: number;
   passportViews: number;

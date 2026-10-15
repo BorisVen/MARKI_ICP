@@ -36,6 +36,7 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
   const [data, setData] = useState<Loaded | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [moved, setMoved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +61,14 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
           // Public endpoint works for guests; signed-in users fall back to the protected one on older servers.
           const v = await apiPublicPassport(ownerId, nftId)
             .catch(e => (user ? apiVerifyNFT({ nftId, ownerId: ownerId! }) : Promise.reject(e)));
+          const movedTo = (v as { movedTo?: { ownerId: string; nftId: string } }).movedTo;
+          if (movedTo) {
+            // An old QR: keep the address pointing at the NFT's current passport.
+            ownerId = movedTo.ownerId;
+            nftId = movedTo.nftId;
+            window.history.replaceState({}, '', `?nft=${encodeURIComponent(nftId)}&owner=${encodeURIComponent(ownerId)}`);
+            if (!cancelled) setMoved(true);
+          }
           if (!cancelled) setData({ nft: v.nft, ownerName: ownerName ?? (v as { ownerName?: string }).ownerName, issuerName: v.issuerName, issuerVerified: v.issuerVerified, verified: v.issuedByIdenity });
           if (user?.uid !== ownerId) apiViewPassport(ownerId, nftId);
         } else {
@@ -113,6 +122,7 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
             </div>
 
             <div>
+              {moved && <div className="notice notice-info" style={{ marginTop: 0 }}>🎁 Цей NFT уже передано — показуємо його актуальний паспорт.</div>}
               {data.verified && <div className="viewer-verdict">✓ Оригінал · паспорт перевірено Marki</div>}
               <div className="ph-label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--muted)' }}>Цифровий паспорт товару</div>
               <h1 className="viewer-title">{nft.title}</h1>
