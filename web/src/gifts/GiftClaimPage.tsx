@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiClaimGift, apiGiftPreview, type GiftPreview } from '../api';
+import { apiClaimGift, apiGiftPreview, apiMyGifts, type GiftPreview } from '../api';
 import { useAuth } from '../auth';
 import Logo from '../Logo';
 
@@ -23,6 +23,15 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
       .catch(e => setError(e?.status === 404 ? 'Подарунок не знайдено. Перевір посилання.' : 'Подарунок тимчасово недоступний. Спробуй пізніше.'));
   }, [code]);
 
+  // Someone reopening a link they already used sees their result, not the button.
+  useEffect(() => {
+    if (!user) return;
+    apiMyGifts()
+      .then(g => g.received.find(x => x.id === code)?.claims.filter(c => c.uid === user.uid).length ?? 0)
+      .then(n => { if (n > 0) setClaimed(n); })
+      .catch(() => {});
+  }, [code, user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const claim = async (all = false) => {
     if (!user) { onSignIn?.('signup'); return; }
     setBusy(true);
@@ -31,9 +40,15 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
       const r = await apiClaimGift(code, all);
       setClaimed(r.nfts?.length ?? 1);
     } catch (e: any) {
-      setError(e?.message ?? 'Не вдалося забрати подарунок');
+      // The answer can get lost on a weak network even though the claim went
+      // through (or this person took it before): ask what actually happened.
+      const mine = await apiMyGifts().then(g => g.received.find(x => x.id === code)).catch(() => undefined);
+      const taken = mine?.claims.filter(c => c.uid === user?.uid).length ?? 0;
+      if (taken > 0) setClaimed(taken);
+      else setError(e?.message ?? 'Не вдалося забрати подарунок');
     } finally {
       setBusy(false);
+      apiGiftPreview(code).then(setGift).catch(() => {});
     }
   };
 
