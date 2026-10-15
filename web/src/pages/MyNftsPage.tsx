@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
-import { apiGetNFTs, apiListDeliveries, type Delivery, type NFT } from '../api';
+import { apiGetNFTs, apiListDeliveries, apiMyGifts, type Delivery, type NFT } from '../api';
 import { useAuth } from '../auth';
 import EmptyState from '../EmptyState';
 import { fmtDateTime, plural } from '../format';
@@ -60,13 +60,16 @@ export default function MyNftsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<NFT | null>(null);
+  const [reserved, setReserved] = useState<Set<string>>(new Set());
 
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [n, d] = await Promise.all([apiGetNFTs(), apiListDeliveries().catch(() => [])]);
+      const [n, d, g] = await Promise.all([apiGetNFTs(), apiListDeliveries().catch(() => []), apiMyGifts().catch(() => null)]);
       setNfts(n);
+      // NFTs already waiting in an active gift link can't go into another one.
+      setReserved(new Set((g?.sent ?? []).filter(x => x.status === 'active').flatMap(x => x.remainingNftIds)));
       setDeliveries(d);
     } catch (e: any) {
       setError(e?.message ?? 'Не вдалося завантажити паспорти');
@@ -83,7 +86,7 @@ export default function MyNftsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
     // Same collection (batch) as the open passport: lets the owner gift the whole set.
     const collection = (open.batchName ? nfts.filter(n => n.batchName === open.batchName) : [open])
       .filter(n => !(n.editionNumber === 0 && n.editionCount));
-    return <Passport nft={open} collection={collection} history={buildHistory(open, deliveries)} ownerName={user?.name ?? ''} ownerId={user?.uid ?? ''} onBack={() => { setOpen(null); reload(); }} />;
+    return <Passport nft={open} collection={collection} reserved={reserved} history={buildHistory(open, deliveries)} ownerName={user?.name ?? ''} ownerId={user?.uid ?? ''} onBack={() => { setOpen(null); reload(); }} onGifted={reload} />;
   }
 
   return (
@@ -133,7 +136,11 @@ export default function MyNftsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
   );
 }
 
-function Passport({ nft, collection, history, ownerName, ownerId, onBack }: { nft: NFT; collection: NFT[]; history: Event[]; ownerName: string; ownerId: string; onBack: () => void }) {
+function Passport({ nft, collection, reserved, history, ownerName, ownerId, onBack, onGifted }: {
+  nft: NFT; collection: NFT[]; reserved: Set<string>; history: Event[]; ownerName: string; ownerId: string;
+  onBack: () => void; onGifted: () => void;
+}) {
+  const free = collection.filter(n => !reserved.has(n.id));
   const [tab, setTab] = useState<'passport' | 'history' | 'share'>('passport');
   const [gifting, setGifting] = useState<NFT[] | null>(null);
   const [qr, setQr] = useState('');
@@ -185,12 +192,16 @@ function Passport({ nft, collection, history, ownerName, ownerId, onBack }: { nf
       </div>
 
       <div className="card-actions" style={{ marginTop: 14 }}>
-        <button className="btn btn-primary" onClick={() => setGifting([nft])}><Icon.Gift /> Подарувати</button>
+        {reserved.has(nft.id)
+          ? <span className="badge badge-info">🎁 У підколекції — чекає отримувача</span>
+          : <button className="btn btn-primary" onClick={() => setGifting([nft])}><Icon.Gift /> Подарувати</button>}
         {collection.length > 1 && (
-          <button className="btn" onClick={() => setGifting(collection)}><Icon.Gift /> Подарувати колекцію ({collection.length})</button>
+          <button className="btn" disabled={free.length === 0} onClick={() => setGifting(free)}>
+            <Icon.Gift /> Нова підколекція · вільно {free.length} з {collection.length}
+          </button>
         )}
       </div>
-      {gifting && <CreateGiftModal nfts={gifting} onClose={() => setGifting(null)} />}
+      {gifting && <CreateGiftModal nfts={gifting} onClose={() => { setGifting(null); onGifted(); }} />}
 
       <div className="mode-tabs" role="tablist" style={{ marginTop: 16 }}>
         <button className={`mode-tab ${tab === 'passport' ? 'active' : ''}`} onClick={() => setTab('passport')}>Паспорт</button>

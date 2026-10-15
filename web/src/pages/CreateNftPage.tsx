@@ -100,7 +100,11 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
       let nftIds: string[];
       let imageUrl = '';
       if (copies > 1) {
-        form.append('metadata', JSON.stringify({ ...metadata, batchName: collection.trim() || title.trim(), editionCount: copies }));
+        // Token numbers go with the records: no update per copy afterwards.
+        form.append('metadata', JSON.stringify({
+          ...metadata, batchName: collection.trim() || title.trim(), editionCount: copies,
+          mintAddresses: mint ? mint.tokenIds.map(icpMintAddress) : [],
+        }));
         const r: any = await apiCreateEditionNFTs(form);
         nftIds = r?.editionIds ?? [];
         imageUrl = r?.imageUrl ?? '';
@@ -112,7 +116,7 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
       }
       if (nftIds.length === 0) throw new Error('Сервер не зберіг NFT. Спробуй ще раз.');
 
-      if (mint) {
+      if (mint && copies === 1) {
         setBusy('Прив’язуємо записи блокчейну…');
         for (let i = 0; i < nftIds.length && i < mint.tokenIds.length; i++) {
           await apiUpdateNFT(nftIds[i], { mintAddress: icpMintAddress(mint.tokenIds[i]) });
@@ -213,8 +217,8 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
             <label>Кількість копій</label>
             <div className="stepper-input">
               <button type="button" className="btn" onClick={() => setCopies(Math.max(1, copies - 1))}>−</button>
-              <input type="number" min={1} max={1000} value={copies} onChange={e => setCopies(Math.min(1000, Math.max(1, Number(e.target.value) || 1)))} />
-              <button type="button" className="btn" onClick={() => setCopies(Math.min(1000, copies + 1))}>+</button>
+              <input type="number" min={1} max={100} value={copies} onChange={e => setCopies(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} />
+              <button type="button" className="btn" onClick={() => setCopies(Math.min(100, copies + 1))}>+</button>
             </div>
             <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>1 — унікальна річ. Більше — серія однакових NFT, кожна копія спише 1 NFT з тарифу.</div>
           </div>
