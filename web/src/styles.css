@@ -2388,3 +2388,5 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
   .gc-cat { width: 60px; height: 60px; font-size: 32px; border-radius: 14px; }
   .gc-photo { aspect-ratio: 1 / 1; }
 }
+.group-share-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: 260px; overflow-y: auto; text-align: left; }
+.group-share-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }

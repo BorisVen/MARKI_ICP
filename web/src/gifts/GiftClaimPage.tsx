@@ -15,7 +15,7 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
   const [gift, setGift] = useState<GiftPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [claimed, setClaimed] = useState(false);
+  const [claimed, setClaimed] = useState(0);
 
   useEffect(() => {
     apiGiftPreview(code)
@@ -23,13 +23,13 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
       .catch(e => setError(e?.status === 404 ? 'Подарунок не знайдено. Перевір посилання.' : 'Подарунок тимчасово недоступний. Спробуй пізніше.'));
   }, [code]);
 
-  const claim = async () => {
+  const claim = async (all = false) => {
     if (!user) { onSignIn?.('signup'); return; }
     setBusy(true);
     setError(null);
     try {
-      await apiClaimGift(code);
-      setClaimed(true);
+      const r = await apiClaimGift(code, all);
+      setClaimed(r.nfts?.length ?? 1);
     } catch (e: any) {
       setError(e?.message ?? 'Не вдалося забрати подарунок');
     } finally {
@@ -57,11 +57,12 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
             <div className="gift-ribbon">🎁 Подарунок від {gift.ownerName}{gift.fromCompany && ' ✓'}</div>
             {gift.image && <img src={gift.image} alt={gift.title} className="gift-image" />}
             <h1>{gift.title}</h1>
+            {gift.parts && <div className="muted" style={{ fontSize: 13, marginTop: -2, marginBottom: 6 }}>Частина {gift.part} з {gift.parts}</div>}
             {gift.message && <p className="gift-message">«{gift.message}»</p>}
 
             {claimed ? (
               <>
-                <div className="success-banner">Готово! NFT уже у твоїх паспортах.</div>
+                <div className="success-banner">Готово! {claimed > 1 ? `${claimed} NFT уже` : 'NFT уже'} у твоїх паспортах.</div>
                 <button className="btn btn-primary btn-block" onClick={onOpenPassports}>Відкрити мої паспорти</button>
               </>
             ) : gone ? (
@@ -77,9 +78,14 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
               <>
                 <div className="muted" style={{ fontSize: 13, marginBottom: 10 }}>Залишилось {gift.remaining} з {gift.total}</div>
                 {error && <div className="error-banner">{error}</div>}
-                <button className="btn btn-primary btn-block gift-claim-btn" onClick={claim} disabled={busy}>
-                  {busy ? 'Забираємо…' : user ? 'Забрати подарунок' : 'Увійти й забрати'}
+                <button className="btn btn-primary btn-block gift-claim-btn" onClick={() => claim(false)} disabled={busy}>
+                  {busy ? 'Забираємо…' : user ? (gift.remaining > 1 ? 'Забрати 1 NFT' : 'Забрати подарунок') : 'Увійти й забрати'}
                 </button>
+                {user && gift.allowAll && gift.remaining > 1 && (
+                  <button className="btn btn-block" style={{ marginTop: 8 }} onClick={() => claim(true)} disabled={busy}>
+                    🎁 Забрати всю підколекцію ({gift.remaining})
+                  </button>
+                )}
                 {!user && <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Реєстрація займе хвилину — NFT одразу з’явиться в паспортах.</div>}
               </>
             )}
