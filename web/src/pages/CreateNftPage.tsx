@@ -162,7 +162,7 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
           {preview && <img src={preview} alt="" className="create-done-img" />}
           {done && (
             <div className="card v-card" style={{ flexDirection: 'column', gap: 0 }}>
-              <div className="md-row"><span className="muted">Записано в блокчейн</span><strong>Internet Computer · № {done.tokenIds.map(String).join(', ')}</strong></div>
+              <div className="md-row"><span className="muted">Записано в блокчейн</span><strong>Internet Computer · № {done.tokenIds.length > 6 ? `${done.tokenIds[0]}–${done.tokenIds[done.tokenIds.length - 1]}` : done.tokenIds.map(String).join(', ')}</strong></div>
               <div className="md-row"><span className="muted">Вартість запису</span><span>{usd < 0.01 ? 'менше 1 цента' : `$${usd.toFixed(2)}`} · оплачує Marki</span></div>
               <div className="md-row"><span className="muted">Залишилось у тарифі</span><strong>{done.subscription.photo_mints_left.toString()} NFT з фото</strong></div>
             </div>
@@ -217,8 +217,8 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
             <label>Кількість копій</label>
             <div className="stepper-input">
               <button type="button" className="btn" onClick={() => setCopies(Math.max(1, copies - 1))}>−</button>
-              <input type="number" min={1} max={100} value={copies} onChange={e => setCopies(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} />
-              <button type="button" className="btn" onClick={() => setCopies(Math.min(100, copies + 1))}>+</button>
+              <input type="number" min={1} max={1000} value={copies} onChange={e => setCopies(Math.min(1000, Math.max(1, Number(e.target.value) || 1)))} />
+              <button type="button" className="btn" onClick={() => setCopies(Math.min(1000, copies + 1))}>+</button>
             </div>
             <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>1 — унікальна річ. Більше — серія однакових NFT, кожна копія спише 1 NFT з тарифу.</div>
           </div>
