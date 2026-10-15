@@ -43,6 +43,8 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
   const [collection, setCollection] = useState('');
   const [copies, setCopies] = useState(1);
   const [forSale, setForSale] = useState(false);
+  // Gift collection: not sold; visitors ask for it from the passport QR.
+  const [gift, setGift] = useState(false);
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState('UAH');
   const [dragOver, setDragOver] = useState(false);
@@ -83,9 +85,10 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
         category: 'Other',
         blockchain: 'icp',
         royalty: 0,
-        forSale,
+        forSale: forSale && !gift,
         currency,
-        ...(forSale ? { price: Number(price) } : {}),
+        giftCollection: gift,
+        ...(forSale && !gift ? { price: Number(price) } : {}),
         ...(collection.trim() ? { batchName: collection.trim() } : {}),
       };
 
@@ -224,9 +227,13 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
           </div>
 
           <div className="toggle-row">
+            <div><div className="lbl">🎁 Подарункова колекція</div><div className="sub">Не продається: за QR паспорта люди просять подарунок, а ви видаєте</div></div>
+            <div className={`switch ${gift ? 'on' : ''}`} role="switch" aria-checked={gift} onClick={() => { setGift(!gift); if (!gift) setForSale(false); }}><div className="knob" /></div>
+          </div>
+          {!gift && <div className="toggle-row">
             <div><div className="lbl">Виставити на продаж</div><div className="sub">З’явиться в Маркеті, оплата при отриманні</div></div>
             <div className={`switch ${forSale ? 'on' : ''}`} role="switch" aria-checked={forSale} onClick={() => setForSale(!forSale)}><div className="knob" /></div>
-          </div>
+          </div>}
           {forSale && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 10 }}>
               <div className="field"><label>Ціна</label><input value={price} onChange={e => setPrice(e.target.value.replace(',', '.'))} inputMode="decimal" placeholder="0" /></div>
