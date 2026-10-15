@@ -135,6 +135,9 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
                 <div className="md-row"><span className="muted">Номер паспорта</span><code style={{ fontSize: 12 }}>{passportNo(nft.id)}</code></div>
                 {nft.category && <div className="md-row"><span className="muted">Категорія</span><span>{nft.category}</span></div>}
                 {nft.createdAt && <div className="md-row"><span className="muted">Випущено</span><span>{fmtDateTime(nft.createdAt)}</span></div>}
+                {nft.purchase && (
+                  <div className="md-row"><span className="muted">Куплено</span><span>{[nft.purchase.date.split('-').reverse().join('.'), nft.purchase.place].filter(Boolean).join(' · ')}</span></div>
+                )}
                 {nft.nfcUid && <div className="md-row"><span className="muted">NFC-мітка</span><span>✓ прив’язана</span></div>}
                 {nft.mintAddress?.startsWith('icp:') && (
                   <div className="md-row"><span className="muted">Блокчейн</span><span>Internet Computer · № {nft.mintAddress.split(':')[2]}</span></div>

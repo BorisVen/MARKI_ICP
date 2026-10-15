@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
-import { apiGetNFTs, apiListDeliveries, apiMyGifts, type Delivery, type NFT } from '../api';
+import { apiGetNFTs, apiListDeliveries, apiMyGifts, apiSetGiftCollection, type Delivery, type NFT } from '../api';
 import { useAuth } from '../auth';
 import EmptyState from '../EmptyState';
 import { fmtDateTime, plural } from '../format';
@@ -159,6 +159,7 @@ function Passport({ nft, collection, reserved, history, ownerName, ownerId, onBa
     ['Випущено', fmtDateTime(nft.createdAt)],
     nft.category ? ['Категорія', nft.category] : null,
     nft.batchName ? ['Колекція', nft.batchName] : null,
+    nft.purchase ? ['Куплено', [nft.purchase.date.split('-').reverse().join('.'), nft.purchase.place].filter(Boolean).join(' · ')] : null,
     ...(nft.attributes ?? []).map(a => [a.trait_type, a.value]),
   ].filter(Boolean) as [string, string][], [nft, ownerName]);
 
@@ -195,6 +196,12 @@ function Passport({ nft, collection, reserved, history, ownerName, ownerId, onBa
         {reserved.has(nft.id)
           ? <span className="badge badge-info">🎁 У підколекції — чекає отримувача</span>
           : <button className="btn btn-primary" onClick={() => setGifting([nft])}><Icon.Gift /> Подарувати</button>}
+        {!nft.giftCollection ? (
+          <button className="btn" onClick={async () => {
+            if (!confirm(`Зробити «${nft.batchName || nft.title}» подарунковою (${collection.length} NFT)? За QR паспорта люди зможуть запросити подарунок, а ви — видати.`)) return;
+            try { await apiSetGiftCollection(collection.map(n => n.id), true); onGifted(); } catch (e: any) { alert(e?.message ?? 'Не вдалося'); }
+          }}>🎁 Зробити подарунковою</button>
+        ) : <span className="badge badge-info">🎁 Подарункова колекція</span>}
         {collection.length > 1 && (
           <button className="btn" disabled={free.length === 0} onClick={() => setGifting(free)}>
             <Icon.Gift /> Нова підколекція · вільно {free.length} з {collection.length}

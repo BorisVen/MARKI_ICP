@@ -152,6 +152,8 @@ export type NFT = {
   giftId?: string;
   /** Minted as a gift collection: visitors may ask the owner for it. */
   giftCollection?: boolean;
+  /** When and where the owner bought the product (from a granted gift request). */
+  purchase?: { date: string; place?: string };
   /** Wallet owner's uid (set by the API). */
   ownerId?: string;
   /** Ownership chain, oldest first: issuer, then every gift or sale. */
@@ -747,3 +749,6 @@ export const apiCreateGiftRequest = (d: { ownerId: string; nftId: string; bought
 export const apiGiftRequests = () => get<{ incoming: GiftRequest[]; outgoing: GiftRequest[] }>('/api/gift-requests');
 export const apiApproveGiftRequest = (id: string) => post<GiftRequest>(`/api/gift-requests/${encodeURIComponent(id)}/approve`);
 export const apiDeclineGiftRequest = (id: string) => post<GiftRequest>(`/api/gift-requests/${encodeURIComponent(id)}/decline`);
+/** Mark (or unmark) NFTs as a gift collection. */
+export const apiSetGiftCollection = (nftIds: string[], value: boolean) =>
+  post<{ changed: number }>('/api/nfts/gift-collection', { nftIds, value });
