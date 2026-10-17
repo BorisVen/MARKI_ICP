@@ -61,12 +61,20 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const pick = (f?: File | null) => {
+  const pick = async (f?: File | null) => {
     if (!f) return;
     if (!f.type.startsWith('image/')) { setError('Обери зображення (JPG, PNG, WebP).'); return; }
     if (f.size > 15 * 1024 * 1024) { setError('Фото завелике: до 15 МБ.'); return; }
     setError(null);
-    setFile(f);
+    // Copy the photo now: on Android the app may read a picked file only for a
+    // short while, and the mint comes later.
+    try {
+      setFile(new File([await f.arrayBuffer()], f.name, { type: f.type, lastModified: f.lastModified }));
+    } catch {
+      setFile(null);
+      setError('Не вдалося прочитати фото. Оберіть його ще раз.');
+    }
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const left = plan.active ? Number(plan.subscription!.photo_mints_left) : 0;
