@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiAddComment, apiFollow, apiGetPosts, apiLikePost, apiRepostPost, type Post } from '../api';
+import { apiAddComment, apiFollow, apiGetPosts, apiLikePost, apiPublicProfile, apiRepostPost, type Post, type PublicProfile } from '../api';
 import { useAuth } from '../auth';
 import { fmtAgo, fmtPrice, plural } from '../format';
 import { Icon } from '../icons';
@@ -29,10 +29,12 @@ const short = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 
  * sit on the right (follow, like, comments, repost, share); title, price, «Купити»
  * and «Паспорт» at the bottom.
  */
-export default function ReelsPage({ onJumpTo, startId, onBack }: {
+export default function ReelsPage({ onJumpTo, startId, startPanel, onBack }: {
   onJumpTo: (p: PageId) => void;
-  /** Opened from the marketplace on this post. */
+  /** Opened from the marketplace (or a notification) on this post. */
   startId?: string | null;
+  /** Opened from a notification: who liked it, or its comments. */
+  startPanel?: 'likes' | 'comments' | null;
   /** Back to the marketplace (shown when opened from it). */
   onBack?: () => void;
 }) {
@@ -41,6 +43,7 @@ export default function ReelsPage({ onJumpTo, startId, onBack }: {
   const [error, setError] = useState<string | null>(null);
   const [buying, setBuying] = useState<Post | null>(null);
   const [comments, setComments] = useState<Post | null>(null);
+  const [likers, setLikers] = useState<Post | null>(null);
   const [panel, setPanel] = useState<'search' | 'history' | null>(null);
   const feed = useRef<HTMLDivElement>(null);
 
@@ -56,10 +59,15 @@ export default function ReelsPage({ onJumpTo, startId, onBack }: {
     return () => io.disconnect();
   }, [posts]);
 
-  // Opened on a post from the marketplace: start there.
+  // Opened on a post (from the marketplace or a notification): start there.
+  const started = useRef(false);
   useEffect(() => {
-    if (!startId || !posts?.length) return;
+    if (!startId || !posts?.length || started.current) return;
+    started.current = true;
     feed.current?.querySelector(`[data-id="${CSS.escape(startId)}"]`)?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+    const post = posts.find(p => p.id === startId);
+    if (post && startPanel === 'comments') setComments(post);
+    if (post && startPanel === 'likes') setLikers(post);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts]);
 
@@ -116,6 +124,7 @@ export default function ReelsPage({ onJumpTo, startId, onBack }: {
       </div>
       {panel && <FindSheet mode={panel} posts={posts} onPick={jumpTo} onClose={() => setPanel(null)} />}
       {buying && <ProductModal post={buying} onClose={() => setBuying(null)} onOrdered={() => { setBuying(null); onJumpTo('orders'); }} />}
+      {likers && <LikesSheet post={likers} onClose={() => setLikers(null)} />}
       {comments && <CommentsSheet post={comments} onClose={() => setComments(null)} onChange={p => { update(p); setComments(p); }} />}
     </>
   );
@@ -288,6 +297,39 @@ export function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose
           <button className={`rc-send ${can ? 'on' : ''}`} onClick={send} disabled={!can} aria-label="Надіслати">
             {busy ? <span className="mini-spin" /> : <Icon.Send size={20} />}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Who liked a post (opened from a like notification). */
+function LikesSheet({ post, onClose }: { post: Post; onClose: () => void }) {
+  const ids = (post.likedBy ?? []).slice(-50).reverse();
+  const [people, setPeople] = useState<PublicProfile[] | null>(null);
+  useEffect(() => {
+    Promise.all(ids.map(id => apiPublicProfile(id).catch(() => null)))
+      .then(list => setPeople(list.filter((p): p is PublicProfile => !!p)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id]);
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet rc-sheet" onClick={e => e.stopPropagation()}>
+        <div className="sheet-handle" />
+        <div className="rc-head">
+          <strong>❤️ Вподобали · {post.likes ?? ids.length}</strong>
+          <button className="rc-close" onClick={onClose} aria-label="Закрити">✕</button>
+        </div>
+        <div className="rc-list">
+          {!people ? <div className="spinner">Завантаження…</div>
+            : people.length === 0 ? <div className="rc-empty"><div>🤍</div><strong>Поки нікого</strong></div>
+            : people.map(u => (
+              <button key={u.uid} className="lk-item" onClick={() => { onClose(); openRoute(`?u=${encodeURIComponent(u.username)}`); }}>
+                <span className="rc-avatar">{u.avatar ? <img src={u.avatar} alt="" /> : (u.name || u.username).slice(0, 1).toUpperCase()}</span>
+                <span className="lk-names"><strong>{u.name || u.username}</strong><small>@{u.username}</small></span>
+                <span className="lk-heart">❤️</span>
+              </button>
+            ))}
         </div>
       </div>
     </div>

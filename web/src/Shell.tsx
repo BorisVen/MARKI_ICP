@@ -3,6 +3,7 @@ import TopToast, { showToast } from './TopToast';
 import { Icon } from './icons';
 import { useAuth } from './auth';
 import { apiGetNotifications } from './api';
+import { openNotification } from './openNotification';
 import Logo from './Logo';
 
 export type PageId =
@@ -92,7 +93,7 @@ export default function Shell({ page, setPage, title, children }: Props) {
         const fresh = known.current ? n.filter(x => !x.read && !known.current!.has(x.id)) : [];
         known.current = new Set(n.map(x => x.id));
         const newest = fresh.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
-        if (newest) showToast({ id: newest.id, title: newest.title, text: newest.text ?? newest.body, type: newest.type });
+        if (newest) showToast({ id: newest.id, title: newest.title, text: newest.text ?? newest.body, type: newest.type, action: newest.metadata?.action, target: newest.metadata?.target });
       })
       .catch(() => {});
     load();
@@ -164,7 +165,7 @@ export default function Shell({ page, setPage, title, children }: Props) {
         </div>
       )}
 
-      <TopToast onOpen={() => go('notifications')} />
+      <TopToast onOpen={t => openNotification(t)} />
 
       <nav className="mobile-nav">
         {/* Scan sits in the middle as a round button: the one action buyers need most. */}

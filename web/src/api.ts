@@ -293,6 +293,8 @@ export type Notification = {
   read: boolean;
   createdAt: string;
   data?: Record<string, unknown>;
+  /** `action`/`target`: where tapping it leads (see openNotification). */
+  metadata?: { action?: string; target?: string; fromUser?: string; nftTitle?: string };
 };
 
 // ── Auth + profile ───────────────────────────────────────────────────────────

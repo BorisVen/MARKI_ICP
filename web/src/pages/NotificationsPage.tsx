@@ -8,6 +8,7 @@ import {
 } from '../api';
 import { Icon } from '../icons';
 import EmptyState from '../EmptyState';
+import { openNotification } from '../openNotification';
 import { fmtAgo, fmtDateTime, plural } from '../format';
 
 /** Backend texts are English; show Ukrainian ones for the known types. */
@@ -83,8 +84,8 @@ export default function NotificationsPage() {
             <div
               key={n.id}
               className="card"
-              style={{ marginBottom: 10, opacity: n.read ? 0.75 : 1, cursor: n.read ? 'default' : 'pointer' }}
-              onClick={() => { if (!n.read) markRead(n.id); }}
+              style={{ marginBottom: 10, opacity: n.read ? 0.75 : 1, cursor: 'pointer' }}
+              onClick={() => { if (!n.read) markRead(n.id); openNotification({ action: n.metadata?.action, target: n.metadata?.target, type: n.type }); }}
             >
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 22, lineHeight: 1 }}>{t?.icon ?? '📌'}</span>

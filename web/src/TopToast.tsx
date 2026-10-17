@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export type Toast = { id: string; title: string; text?: string; type?: string };
+export type Toast = { id: string; title: string; text?: string; type?: string; action?: string; target?: string };
 
 /** Shows a TikTok-style banner at the top of the app (likes, comments, gifts…). */
 export function showToast(t: Toast) {
@@ -11,7 +11,7 @@ const ICON: Record<string, string> = { like: '❤️', comment: '💬', gift: '�
 /** Banners already shown (a push and the inbox check can bring the same one). */
 const seen = new Set<string>();
 
-export default function TopToast({ onOpen }: { onOpen: () => void }) {
+export default function TopToast({ onOpen }: { onOpen: (t: Toast) => void }) {
   const [toast, setToast] = useState<Toast | null>(null);
   const [leaving, setLeaving] = useState(false);
   const timer = useRef(0);
@@ -39,7 +39,7 @@ export default function TopToast({ onOpen }: { onOpen: () => void }) {
     <button
       className={`top-toast ${leaving ? 'leaving' : ''}`}
       onAnimationEnd={() => { if (leaving) setToast(null); }}
-      onClick={() => { setLeaving(true); onOpen(); }}
+      onClick={() => { setLeaving(true); onOpen(toast); }}
     >
       <span className="tt-icon">{icon}</span>
       <span className="tt-text">

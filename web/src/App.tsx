@@ -28,6 +28,7 @@ import { autoConnectWallet } from './icp/useWallet';
 import { registerPush } from './native/push';
 import { listenAppLinks } from './native/links';
 import OpenInApp from './OpenInApp';
+import { openNotification, type NotificationLink } from './openNotification';
 import { initTheme } from './theme';
 
 const PAGE_TITLES: Record<PageId, string> = {
@@ -86,6 +87,28 @@ function MarkiApp() {
   // The swipe feed opens first, as in TikTok / Instagram.
   // The feed opened from the marketplace starts on the tapped item.
   const [reelStart, setReelStart] = useState<string | null>(null);
+  /** Opened from a notification: show who liked / the comments of the start post. */
+  const [reelPanel, setReelPanel] = useState<'likes' | 'comments' | null>(null);
+  const [giftsTab, setGiftsTab] = useState<'requests' | undefined>(undefined);
+
+  // A tapped notification (push, banner or inbox) opens what it is about.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const { action, target, type } = (e as CustomEvent<NotificationLink>).detail ?? {};
+      if ((action === 'likes' || action === 'comments') && target) {
+        setReelStart(target);
+        setReelPanel(action);
+        setPage('reels');
+      } else if (action === 'gift-requests') { setGiftsTab('requests'); setPage('gifts'); }
+      else if (action === 'gifts' || type === 'gift') { setGiftsTab(undefined); setPage('gifts'); }
+      else if (action === 'nfts' || type === 'nft_created') setPage('nfts');
+      else if (action === 'orders' || type === 'purchase' || type === 'sale') setPage('orders');
+      else if (action === 'goods') setPage('goods');
+      else setPage('notifications');
+    };
+    window.addEventListener('marki:open-notification', on);
+    return () => window.removeEventListener('marki:open-notification', on);
+  }, []);
   // Back from a card payment (`?paid=…`): straight to «Тарифи» to see the result.
   const [page, setPage] = useState<PageId>(() => (new URLSearchParams(window.location.search).has('paid') ? 'plans' : 'home'));
   const [route, setRoute] = useState<PublicRoute | null>(() => readPublicRoute());
@@ -111,7 +134,7 @@ function MarkiApp() {
   useEffect(() => {
     if (!user) return;
     autoConnectWallet(user);
-    registerPush(() => setPage('notifications')).catch(() => {});
+    registerPush(openNotification).catch(() => {});
   }, [user?.uid]);
 
   // Signing in from a public page brings the user back to it.
@@ -171,9 +194,9 @@ function MarkiApp() {
 
   return (
     <Shell page={page} setPage={setPage} title={PAGE_TITLES[page]}>
-      {page === 'reels'         && <ReelsPage onJumpTo={setPage} startId={reelStart} onBack={() => setPage('home')} />}
+      {page === 'reels'         && <ReelsPage key={`${reelStart}-${reelPanel}`} onJumpTo={setPage} startId={reelStart} startPanel={reelPanel} onBack={() => { setReelPanel(null); setPage('home'); }} />}
       {page === 'scan'          && <ScanPage onJumpTo={setPage} />}
-      {page === 'home'          && <HomePage onJumpTo={setPage} onOpenFeed={id => { setReelStart(id ?? null); setPage('reels'); }} />}
+      {page === 'home'          && <HomePage onJumpTo={setPage} onOpenFeed={id => { setReelStart(id ?? null); setReelPanel(null); setPage('reels'); }} />}
       {page === 'nfts'          && <MyNftsPage onJumpTo={setPage} />}
       {page === 'orders'        && <OrdersPage onJumpTo={setPage} />}
       {page === 'verify'        && <VerifyPage onJumpTo={setPage} />}
@@ -184,7 +207,7 @@ function MarkiApp() {
       {page === 'create'        && <Suspense fallback={<div className="spinner">Завантаження…</div>}><CreateNftPage onJumpTo={setPage} /></Suspense>}
       {page === 'wallet'        && <Suspense fallback={<div className="spinner">Завантаження…</div>}><WalletPage onJumpTo={setPage} /></Suspense>}
       {page === 'plans'         && <Suspense fallback={<div className="spinner">Завантаження…</div>}><PlansPage /></Suspense>}
-      {page === 'gifts'         && <GiftsPage />}
+      {page === 'gifts'         && <GiftsPage key={giftsTab ?? 'all'} initialTab={giftsTab} />}
       {page === 'goods'         && <MyGoodsPage onOpen={code => { window.history.pushState({}, '', `?v=${encodeURIComponent(code)}`); setRoute({ kind: 'goods', code }); }} />}
     </Shell>
   );

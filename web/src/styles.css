@@ -2584,3 +2584,7 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .tt-text span { color: rgba(255,255,255,0.75); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @keyframes tt-in { from { transform: translateY(-140%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes tt-out { to { transform: translateY(-140%); opacity: 0; } }
+.lk-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.lk-names { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.lk-names small { color: var(--muted); }
+.lk-heart { font-size: 18px; }

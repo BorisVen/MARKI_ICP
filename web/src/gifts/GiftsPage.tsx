@@ -19,8 +19,8 @@ const STATUS: Record<Gift['status'], { label: string; tone: string }> = {
 };
 
 /** Gifts I sent (with who claimed what and when) and gifts I received. */
-export default function GiftsPage({ hint }: { hint?: string }) {
-  const [tab, setTab] = useState<'sent' | 'received' | 'requests'>('sent');
+export default function GiftsPage({ hint, initialTab }: { hint?: string; initialTab?: 'requests' }) {
+  const [tab, setTab] = useState<'sent' | 'received' | 'requests'>(initialTab ?? 'sent');
   const [requests, setRequests] = useState<{ incoming: GiftRequest[]; outgoing: GiftRequest[] } | null>(null);
   const [data, setData] = useState<{ sent: Gift[]; received: Gift[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
