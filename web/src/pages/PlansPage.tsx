@@ -146,7 +146,8 @@ export default function PricingPage() {
     if (!wallet) return;
     setError(null);
     setBusy(`Відкриваємо оплату карткою «${q.plan.name}»…`);
-    try { await payByCard(q.plan.id, wallet.principal); } catch (e) { setError(errText(e)); setBusy(null); }
+    // On the web the page leaves for WayForPay; in the app it opens in a tab over this page.
+    try { await payByCard(q.plan.id, wallet.principal); setBusy(null); } catch (e) { setError(errText(e)); setBusy(null); }
   };
 
   const fee = pricing?.ledger_fee_e8s ?? 10_000n;

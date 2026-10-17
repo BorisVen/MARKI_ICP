@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react';
-import { apiBillingCheckout, apiBillingOrders, type BillingOrder } from '../api';
+import { useEffect, useRef, useState } from 'react';
+import { API_BASE_URL, apiBillingCheckout, apiBillingOrders, type BillingOrder } from '../api';
+import { IS_NATIVE, openInTab } from '../native/links';
 
 const PENDING_KEY = 'marki.pendingCardOrder';
-/** Inside the phone app the payment page opens in the browser: come back to the website. */
-const IN_APP = window.location.hostname === 'localhost' && window.location.protocol === 'https:';
 
-/** Sends the browser to WayForPay's payment page with the signed form. */
+/**
+ * Pays a plan on WayForPay's page. In the phone app it opens in a browser tab
+ * over the app, which hands back to the app when done; on the web the page
+ * itself goes to WayForPay and comes back with `?paid=`.
+ */
 export async function payByCard(planId: string, principal: string) {
-  const back = IN_APP ? new URL((import.meta.env.VITE_QR_BASE_URL as string) || 'https://borisven.github.io/MARKI_ICP/') : new URL(window.location.href);
+  const back = IS_NATIVE ? new URL((import.meta.env.VITE_QR_BASE_URL as string) || 'https://borisven.github.io/MARKI_ICP/') : new URL(window.location.href);
   back.searchParams.delete('paid');
-  const c = await apiBillingCheckout({ planId, principal, returnUrl: back.toString() });
+  const c = await apiBillingCheckout({ planId, principal, returnUrl: back.toString(), app: IS_NATIVE });
   // The app checks this order when the buyer comes back from the browser.
   try { localStorage.setItem(PENDING_KEY, c.orderId); } catch { /* noop */ }
+  if (await openInTab(`${API_BASE_URL}/api/public/billing/pay/${encodeURIComponent(c.orderId)}`)) {
+    window.dispatchEvent(new Event('marki:card-order'));
+    return;
+  }
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = c.url;
@@ -43,29 +50,32 @@ const fmtTime = (iso: string) => new Date(iso).toLocaleString('uk-UA', { day: 'n
  */
 export function CardOrders({ onPaid }: { onPaid: () => void }) {
   const [orders, setOrders] = useState<BillingOrder[]>([]);
-  const [waiting, setWaiting] = useState(() => {
+  const pending = () => {
     const fromUrl = new URLSearchParams(window.location.search).get('paid');
     if (fromUrl) return fromUrl;
     try { return localStorage.getItem(PENDING_KEY); } catch { return null; }
-  });
+  };
+  const [waiting, setWaitingState] = useState(pending);
+  const waitingRef = useRef(waiting);
+  const setWaiting = (id: string | null) => { waitingRef.current = id; setWaitingState(id); };
 
   useEffect(() => {
     let stop = false;
     let tries = 0;
-    // Back from the browser's payment page: look again.
-    const onShow = () => { if (document.visibilityState === 'visible') { tries = 0; load(); } };
-    document.addEventListener('visibilitychange', onShow);
+    let timer = 0;
     const load = async () => {
+      window.clearTimeout(timer);
       const list = await apiBillingOrders().catch(() => null);
       if (stop || !list) return;
       setOrders(list);
-      const o = waiting ? list.find(x => x.id === waiting) : null;
-      if (waiting && (!o || o.status === 'pending' || o.status === 'inprocessing')) {
-        // Still paying (maybe in the browser): keep asking for a minute, then on return.
-        if (tries++ < 20) setTimeout(load, 3000);
+      const id = waitingRef.current;
+      const o = id ? list.find(x => x.id === id) : null;
+      if (id && (!o || o.status === 'pending' || o.status === 'inprocessing')) {
+        // Still paying (maybe in the browser tab): keep asking for a while, and again on return.
+        if (tries++ < 40) timer = window.setTimeout(load, 3000);
         return;
       }
-      if (waiting) {
+      if (id) {
         setWaiting(null);
         try { localStorage.removeItem(PENDING_KEY); } catch { /* noop */ }
         const url = new URL(window.location.href);
@@ -74,8 +84,19 @@ export function CardOrders({ onPaid }: { onPaid: () => void }) {
         if (o?.credited) onPaid();
       }
     };
+    const again = () => { tries = 0; load(); };
+    // Back from the payment tab, or a new payment started on this page.
+    const onShow = () => { if (document.visibilityState === 'visible') again(); };
+    const onNew = () => { setWaiting(pending()); again(); };
+    document.addEventListener('visibilitychange', onShow);
+    window.addEventListener('marki:card-order', onNew);
     load();
-    return () => { stop = true; document.removeEventListener('visibilitychange', onShow); };
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onShow);
+      window.removeEventListener('marki:card-order', onNew);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

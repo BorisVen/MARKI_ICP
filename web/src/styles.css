@@ -2512,3 +2512,8 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .btn-danger-ghost { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.35); }
 .ii-bridge { max-width: 420px; margin: 0 auto; padding: 48px 20px; text-align: center; min-height: 100vh; box-sizing: border-box; }
 .ii-bridge h2 { margin: 18px 0 8px; }
+
+/* Website on Android: offer the app */
+.open-in-app { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 8px 12px; padding-top: calc(8px + var(--safe-area-inset-top, 0px)); background: var(--card); border-bottom: 1px solid var(--border); font-size: 14px; }
+.open-in-app span { flex: 1; font-weight: 600; }
+.open-in-app .btn { padding: 6px 14px; }

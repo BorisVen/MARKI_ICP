@@ -6,6 +6,7 @@ const BASE_URL =
   'https://idenity.onrender.com';
 
 // console.log('[API] API_BASE_URL:', BASE_URL);
+export const API_BASE_URL = BASE_URL;
 
 async function token(): Promise<string | null> {
   try {
@@ -801,7 +802,7 @@ export type BillingOrder = {
   createdAt: string;
   log: { at: string; text: string }[];
 };
-export const apiBillingCheckout = (d: { planId: string; principal: string; returnUrl: string }) =>
+export const apiBillingCheckout = (d: { planId: string; principal: string; returnUrl: string; app?: boolean }) =>
   post<BillingCheckout>('/api/billing/checkout', d);
 export const apiMarkiWalletSeed = () => get<{ seed: string }>('/api/me/icp-wallet');
 export const apiRegisterPushToken = (token: string) => put<void>('/api/me/push-token', { token });

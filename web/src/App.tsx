@@ -26,6 +26,8 @@ import GiftsPage from './gifts/GiftsPage';
 import GiftClaimPage from './gifts/GiftClaimPage';
 import { autoConnectWallet } from './icp/useWallet';
 import { registerPush } from './native/push';
+import { listenAppLinks } from './native/links';
+import OpenInApp from './OpenInApp';
 import { initTheme } from './theme';
 
 const PAGE_TITLES: Record<PageId, string> = {
@@ -76,7 +78,7 @@ initTheme();
 const II_LOGIN = new URLSearchParams(window.location.search).get('ii-login');
 
 export default function App() {
-  return II_LOGIN ? <Suspense fallback={null}><IiBridge sessionKey={II_LOGIN} /></Suspense> : <MarkiApp />;
+  return II_LOGIN ? <Suspense fallback={null}><IiBridge sessionKey={II_LOGIN} /></Suspense> : <><OpenInApp /><MarkiApp /></>;
 }
 
 function MarkiApp() {
@@ -92,6 +94,15 @@ function MarkiApp() {
     const onPop = () => setRoute(readPublicRoute());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Links into the app: a QR or link from the website, the way back from a card payment.
+  useEffect(() => {
+    listenAppLinks(link => {
+      if (link.kind === 'paid') { setPage('plans'); return; }
+      window.history.pushState({}, '', `?${link.params.toString()}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
   }, []);
 
   // Signed in: the built-in wallet and phone notifications come up by themselves.
