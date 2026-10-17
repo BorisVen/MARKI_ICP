@@ -22,6 +22,8 @@ import MyGoodsPage from './goods/MyGoodsPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import GiftsPage from './gifts/GiftsPage';
 import GiftClaimPage from './gifts/GiftClaimPage';
+import { autoConnectWallet } from './icp/useWallet';
+import { registerPush } from './native/push';
 import { initTheme } from './theme';
 
 const PAGE_TITLES: Record<PageId, string> = {
@@ -70,7 +72,8 @@ initTheme();
 export default function App() {
   const { fbUser, user, loading, error, needsRegistration, reload, logout } = useAuth();
   // The swipe feed opens first, as in TikTok / Instagram.
-  const [page, setPage] = useState<PageId>('reels');
+  // Back from a card payment (`?paid=…`): straight to «Тарифи» to see the result.
+  const [page, setPage] = useState<PageId>(() => (new URLSearchParams(window.location.search).has('paid') ? 'plans' : 'reels'));
   const [route, setRoute] = useState<PublicRoute | null>(() => readPublicRoute());
   // A guest on a public page asked to sign in (or sign up).
   const [authMode, setAuthMode] = useState<'login' | 'signup' | null>(null);
@@ -80,6 +83,13 @@ export default function App() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
+
+  // Signed in: the built-in wallet and phone notifications come up by themselves.
+  useEffect(() => {
+    if (!user) return;
+    autoConnectWallet();
+    registerPush(() => setPage('notifications')).catch(() => {});
+  }, [user?.uid]);
 
   // Signing in from a public page brings the user back to it.
   useEffect(() => { if (fbUser) setAuthMode(null); }, [fbUser]);

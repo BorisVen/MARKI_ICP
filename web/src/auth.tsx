@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { onAuthStateChanged, signOut, type User as FbUser } from 'firebase/auth';
 import { auth } from './firebase';
+import { resetWallet } from './icp/useWallet';
 import { apiMe, type User } from './api';
 
 type AuthState = {
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     needsRegistration,
     reload: fetchProfile,
-    logout: () => signOut(auth),
+    logout: () => { resetWallet(); return signOut(auth); },
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

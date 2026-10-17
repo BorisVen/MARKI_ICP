@@ -11,7 +11,7 @@ export const LEDGER_CANISTER_ID =
 /** What the payments ledger is called: test tokens until the switch to real ICP. */
 export const TOKEN = LEDGER_CANISTER_ID === 'xafvr-biaaa-aaaai-aql5q-cai' ? 'TESTICP' : 'ICP';
 
-export type WalletKind = 'plug' | 'dev';
+export type WalletKind = 'plug' | 'dev' | 'marki';
 
 export type Wallet = {
   kind: WalletKind;
@@ -42,6 +42,22 @@ export async function connectPlug(): Promise<Wallet> {
     kind: 'plug',
     principal,
     actor: (canisterId, idl) => plug.createActor({ canisterId, interfaceFactory: idl }),
+  };
+}
+
+/**
+ * The built-in Marki wallet: an Ed25519 key from a per-account seed kept by Marki,
+ * so it is the same on the phone and on the web and needs no extension. Plans and
+ * mints are signed with it; the tokens themselves live in Marki custody.
+ */
+export async function connectMarkiWallet(seedHex: string): Promise<Wallet> {
+  const seed = new Uint8Array(seedHex.match(/../g)!.map(h => parseInt(h, 16)));
+  const identity = Ed25519KeyIdentity.generate(seed);
+  const agent = await HttpAgent.create({ host: ICP_HOST, identity, shouldFetchRootKey: IS_LOCAL_NETWORK });
+  return {
+    kind: 'marki',
+    principal: identity.getPrincipal().toText(),
+    actor: async (canisterId, idl) => Actor.createActor(idl, { agent, canisterId }),
   };
 }
 

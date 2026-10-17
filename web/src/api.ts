@@ -800,4 +800,6 @@ export type BillingOrder = {
 };
 export const apiBillingCheckout = (d: { planId: string; principal: string; returnUrl: string }) =>
   post<BillingCheckout>('/api/billing/checkout', d);
+export const apiMarkiWalletSeed = () => get<{ seed: string }>('/api/me/icp-wallet');
+export const apiRegisterPushToken = (token: string) => put<void>('/api/me/push-token', { token });
 export const apiBillingOrders = () => get<BillingOrder[]>('/api/billing/orders');

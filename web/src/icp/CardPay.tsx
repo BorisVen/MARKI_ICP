@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { apiBillingCheckout, apiBillingOrders, type BillingOrder } from '../api';
 
+const PENDING_KEY = 'marki.pendingCardOrder';
+/** Inside the phone app the payment page opens in the browser: come back to the website. */
+const IN_APP = window.location.hostname === 'localhost' && window.location.protocol === 'https:';
+
 /** Sends the browser to WayForPay's payment page with the signed form. */
 export async function payByCard(planId: string, principal: string) {
-  const back = new URL(window.location.href);
+  const back = IN_APP ? new URL((import.meta.env.VITE_QR_BASE_URL as string) || 'https://borisven.github.io/MARKI_ICP/') : new URL(window.location.href);
   back.searchParams.delete('paid');
   const c = await apiBillingCheckout({ planId, principal, returnUrl: back.toString() });
+  // The app checks this order when the buyer comes back from the browser.
+  try { localStorage.setItem(PENDING_KEY, c.orderId); } catch { /* noop */ }
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = c.url;
@@ -37,22 +43,31 @@ const fmtTime = (iso: string) => new Date(iso).toLocaleString('uk-UA', { day: 'n
  */
 export function CardOrders({ onPaid }: { onPaid: () => void }) {
   const [orders, setOrders] = useState<BillingOrder[]>([]);
-  const [waiting, setWaiting] = useState(() => new URLSearchParams(window.location.search).get('paid'));
+  const [waiting, setWaiting] = useState(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('paid');
+    if (fromUrl) return fromUrl;
+    try { return localStorage.getItem(PENDING_KEY); } catch { return null; }
+  });
 
   useEffect(() => {
     let stop = false;
     let tries = 0;
+    // Back from the browser's payment page: look again.
+    const onShow = () => { if (document.visibilityState === 'visible') { tries = 0; load(); } };
+    document.addEventListener('visibilitychange', onShow);
     const load = async () => {
       const list = await apiBillingOrders().catch(() => null);
       if (stop || !list) return;
       setOrders(list);
       const o = waiting ? list.find(x => x.id === waiting) : null;
-      if (waiting && (!o || o.status === 'pending' || o.status === 'inprocessing') && tries++ < 20) {
-        setTimeout(load, 3000);
+      if (waiting && (!o || o.status === 'pending' || o.status === 'inprocessing')) {
+        // Still paying (maybe in the browser): keep asking for a minute, then on return.
+        if (tries++ < 20) setTimeout(load, 3000);
         return;
       }
       if (waiting) {
         setWaiting(null);
+        try { localStorage.removeItem(PENDING_KEY); } catch { /* noop */ }
         const url = new URL(window.location.href);
         url.searchParams.delete('paid');
         window.history.replaceState({}, '', url);
@@ -60,7 +75,7 @@ export function CardOrders({ onPaid }: { onPaid: () => void }) {
       }
     };
     load();
-    return () => { stop = true; };
+    return () => { stop = true; document.removeEventListener('visibilitychange', onShow); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -70,7 +85,8 @@ export function CardOrders({ onPaid }: { onPaid: () => void }) {
       {waiting && (
         <div className="progress-banner" style={{ marginBottom: 12 }}>
           <div className="mini-spin" />
-          <div style={{ fontSize: 13 }}>Чекаємо підтвердження оплати від WayForPay… {current && `(${STATUS[current.status] ?? current.status})`}</div>
+          <div style={{ fontSize: 13, flex: 1 }}>Чекаємо підтвердження оплати від WayForPay… {current && `(${STATUS[current.status] ?? current.status})`}</div>
+          <button className="btn" onClick={() => { setWaiting(null); try { localStorage.removeItem(PENDING_KEY); } catch { /* noop */ } }}>Сховати</button>
         </div>
       )}
       {orders.length > 0 && (
