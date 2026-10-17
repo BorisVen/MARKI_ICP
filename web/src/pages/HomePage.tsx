@@ -6,7 +6,7 @@ import { plural } from '../format';
 import { Icon } from '../icons';
 import type { PageId } from '../Shell';
 import { GridSkeleton } from '../Skeleton';
-import { postTitle, ProductCard, ProductModal, useCatalog } from './market';
+import { postAuthor, postTitle, ProductCard, ProductModal, useCatalog } from './market';
 import { needsConfirm, useMyOrders } from './OrdersPage';
 
 const DONE = ['delivered', 'verified', 'completed', 'cancelled'];
@@ -39,7 +39,7 @@ export default function HomePage({ onJumpTo }: { onJumpTo: (p: PageId) => void }
     const q = query.trim().toLowerCase();
     return posts.filter(p =>
       (!tag || p.tags?.includes(tag)) &&
-      (!q || [postTitle(p), p.text, p.description, p.authorName, ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q))),
+      (!q || [postTitle(p), p.text, p.description, postAuthor(p), ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q))),
     );
   }, [posts, query, tag]);
 

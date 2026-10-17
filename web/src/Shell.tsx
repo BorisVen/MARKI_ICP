@@ -5,6 +5,8 @@ import { apiGetNotifications } from './api';
 import Logo from './Logo';
 
 export type PageId =
+  | 'reels'
+  | 'scan'
   | 'home'
   | 'nfts'
   | 'orders'
@@ -32,9 +34,11 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Покупки',
     items: [
+      { id: 'reels',  label: 'Стрічка',          icon: <Icon.Play />,   mobile: true },
       { id: 'home',   label: 'Маркет',           icon: <Icon.Store />,  mobile: true },
-      { id: 'orders', label: 'Замовлення',       icon: <Icon.Truck />,  mobile: true },
-      { id: 'verify', label: 'Перевірити товар', icon: <Icon.QrCode />, mobile: true, short: 'Перевірка' },
+      { id: 'scan',   label: 'Сканувати QR',     icon: <Icon.QrCode />, mobile: true, short: 'Сканер' },
+      { id: 'orders', label: 'Замовлення',       icon: <Icon.Truck /> },
+      { id: 'verify', label: 'Перевірити за NFC', icon: <Icon.Scan /> },
     ],
   },
   {
@@ -152,21 +156,22 @@ export default function Shell({ page, setPage, title, children }: Props) {
 
       <nav className="mobile-nav">
         {/* Scan sits in the middle as a round button: the one action buyers need most. */}
-        {['home', 'orders', 'verify', 'profile'].map(id => mobileItems.find(i => i.id === id)!).map(item => (
-          <button
-            key={item.id}
-            className={`nav-item ${item.id === 'verify' ? 'nav-fab' : ''} ${page === item.id ? 'active' : ''}`}
-            onClick={() => go(item.id)}
-          >
-            <span className="ic">{item.icon}</span>
-            {item.short ?? item.label}
-          </button>
-        ))}
-        <button className={`nav-item ${moreActive || moreOpen ? 'active' : ''}`} onClick={() => setMoreOpen(o => !o)}>
-          <span className="ic"><Icon.More /></span>
-          Ще
-          {unread > 0 && <span className="dot-count" style={{ top: 6, right: '28%' }}>{unread > 9 ? '9+' : unread}</span>}
-        </button>
+        {/* Feed · Market · [Scanner] · Inbox · Profile — like TikTok / Instagram; the rest lives in Profile. */}
+        {(['reels', 'home', 'scan', 'notifications', 'profile'] as PageId[]).map(id => {
+          const item = ALL_NAV.find(i => i.id === id)!;
+          const label = id === 'notifications' ? 'Вхідні' : (item.short ?? item.label);
+          return (
+            <button
+              key={id}
+              className={`nav-item ${id === 'scan' ? 'nav-fab' : ''} ${page === id ? 'active' : ''}`}
+              onClick={() => go(id)}
+            >
+              <span className="ic">{item.icon}</span>
+              {label}
+              {id === 'notifications' && unread > 0 && <span className="dot-count" style={{ top: 6, right: '28%' }}>{unread > 9 ? '9+' : unread}</span>}
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

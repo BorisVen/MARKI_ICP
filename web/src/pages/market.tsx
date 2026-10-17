@@ -8,8 +8,11 @@ import { Icon } from '../icons';
 export const postTitle = (p: Post) =>
   (p.nftTitle || p.title || 'Товар').replace(/\s*\(\d+(?:\/\d+)? editions\)$/i, '');
 export const postImage = (p: Post) => p.nftImage || p.nftImages?.[0] || '';
+/** The API names the author `userName`; older posts may carry `authorName`. */
+export const postAuthor = (p: Post) => p.userName || p.authorName || 'Продавець Marki';
+export const postAvatar = (p: Post) => p.userAvatar || p.authorAvatar || '';
 /** NFT id the backend moves to the buyer (first one for a collection). */
-const postNftId = (p: Post) => p.walletNftId || p.walletNftIds?.[0] || p.nftId || '';
+export const postNftId = (p: Post) => p.walletNftId || p.walletNftIds?.[0] || p.nftId || '';
 
 /** Listings other people put up for sale, newest first. */
 export function useCatalog() {
@@ -45,7 +48,7 @@ export function ProductCard({ post, onOpen }: { post: Post; onOpen: () => void }
       <img src={postImage(post)} alt={postTitle(post)} />
       <div className="pc-body">
         <div className="pc-title">{postTitle(post)}</div>
-        <div className="muted" style={{ fontSize: 12 }}>{post.authorName || 'Продавець Marki'}</div>
+        <div className="muted" style={{ fontSize: 12 }}>{postAuthor(post)}</div>
         <div className="pc-foot">
           <strong>{fmtPrice(post.price, post.currency)}</strong>
           {post.nftImages && post.nftImages.length > 1 && <span className="badge badge-muted">{post.nftImages.length} шт</span>}
@@ -110,7 +113,7 @@ export function ProductModal({ post, onClose, onOrdered }: { post: Post; onClose
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ margin: '0 0 2px' }}>{postTitle(post)}</h3>
-                <div className="muted" style={{ fontSize: 12 }}>{post.authorName || 'Продавець Marki'} · {fmtAgo(post.createdAt)}</div>
+                <div className="muted" style={{ fontSize: 12 }}>{postAuthor(post)} · {fmtAgo(post.createdAt)}</div>
               </div>
               <div style={{ fontSize: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>{fmtPrice(post.price, post.currency)}</div>
             </div>

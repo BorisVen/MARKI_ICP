@@ -130,11 +130,11 @@ function PostCard({
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {post.authorAvatar
-              ? <img src={post.authorAvatar} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
-              : <span className="avatar-letter" style={{ width: 34, height: 34, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-soft)', color: 'var(--primary)', fontWeight: 600 }}>{(post.authorName || 'M').slice(0, 1).toUpperCase()}</span>}
+            {(post.userAvatar || post.authorAvatar)
+              ? <img src={(post.userAvatar || post.authorAvatar)} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
+              : <span className="avatar-letter" style={{ width: 34, height: 34, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-soft)', color: 'var(--primary)', fontWeight: 600 }}>{(post.userName || post.authorName || 'M').slice(0, 1).toUpperCase()}</span>}
             <div>
-              <h3 style={{ fontSize: 14, margin: 0 }}>{post.authorName || (isMine ? 'Ви' : 'Учасник Marki')}</h3>
+              <h3 style={{ fontSize: 14, margin: 0 }}>{post.userName || post.authorName || (isMine ? 'Ви' : 'Учасник Marki')}</h3>
               <div className="sub" style={{ fontSize: 11 }} title={fmtDateTime(post.createdAt)}>{fmtAgo(post.createdAt)}</div>
             </div>
           </div>

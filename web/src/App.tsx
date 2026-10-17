@@ -4,6 +4,8 @@ import Login from './Login';
 import Register from './Register';
 import Shell, { PageId } from './Shell';
 import HomePage from './pages/HomePage';
+import ReelsPage from './pages/ReelsPage';
+import ScanPage from './pages/ScanPage';
 import MyNftsPage from './pages/MyNftsPage';
 import OrdersPage from './pages/OrdersPage';
 import VerifyPage from './pages/VerifyPage';
@@ -23,6 +25,8 @@ import GiftClaimPage from './gifts/GiftClaimPage';
 import { initTheme } from './theme';
 
 const PAGE_TITLES: Record<PageId, string> = {
+  reels:         'Стрічка',
+  scan:          'Сканер',
   home:          'Маркет',
   nfts:          'Мої паспорти',
   orders:        'Мої замовлення',
@@ -65,7 +69,8 @@ initTheme();
 
 export default function App() {
   const { fbUser, user, loading, error, needsRegistration, reload, logout } = useAuth();
-  const [page, setPage] = useState<PageId>('home');
+  // The swipe feed opens first, as in TikTok / Instagram.
+  const [page, setPage] = useState<PageId>('reels');
   const [route, setRoute] = useState<PublicRoute | null>(() => readPublicRoute());
   // A guest on a public page asked to sign in (or sign up).
   const [authMode, setAuthMode] = useState<'login' | 'signup' | null>(null);
@@ -133,6 +138,8 @@ export default function App() {
 
   return (
     <Shell page={page} setPage={setPage} title={PAGE_TITLES[page]}>
+      {page === 'reels'         && <ReelsPage onJumpTo={setPage} />}
+      {page === 'scan'          && <ScanPage onJumpTo={setPage} />}
       {page === 'home'          && <HomePage onJumpTo={setPage} />}
       {page === 'nfts'          && <MyNftsPage onJumpTo={setPage} />}
       {page === 'orders'        && <OrdersPage onJumpTo={setPage} />}

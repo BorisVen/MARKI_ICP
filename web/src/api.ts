@@ -167,6 +167,10 @@ export type NFT = {
 export type Post = {
   id: string;
   userId: string;
+  /** What the API sends: the author's name and avatar. */
+  userName?: string;
+  userAvatar?: string;
+  reposts?: number;
   authorName?: string;
   authorAvatar?: string;
   text?: string;

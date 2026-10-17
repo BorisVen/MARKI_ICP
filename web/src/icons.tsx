@@ -38,6 +38,14 @@ export const Icon = {
     wrap(<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />, size),
   Repost: ({ size }: IconProps = {}) =>
     wrap(<><path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>, size),
+  Comment: ({ size }: IconProps = {}) =>
+    wrap(<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />, size),
+  Share: ({ size }: IconProps = {}) =>
+    wrap(<><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4z" /></>, size),
+  Scan: ({ size }: IconProps = {}) =>
+    wrap(<><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><path d="M7 12h10" /></>, size),
+  Play: ({ size }: IconProps = {}) =>
+    wrap(<path d="M6 4l14 8-14 8z" />, size),
   Menu: ({ size }: IconProps = {}) =>
     wrap(<><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /></>, size),
   Edit: ({ size }: IconProps = {}) =>
