@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiIiRelayPut } from './api';
 import { iiDelegateTo } from './icp/ii';
 import Logo from './Logo';
 
@@ -17,6 +18,8 @@ export default function IiBridge({ sessionKey }: { sessionKey: string }) {
     setState('busy');
     try {
       const chain = await iiDelegateTo(sessionKey);
+      // Through Marki's server first: the app picks it up even if the link below is blocked.
+      await apiIiRelayPut(sessionKey, chain).catch(() => {});
       const url = `marki://ii#${encodeURIComponent(JSON.stringify(chain))}`;
       setBack(url);
       setState('done');
@@ -35,7 +38,7 @@ export default function IiBridge({ sessionKey }: { sessionKey: string }) {
         <p className="muted">Посилання пошкоджене. Відкрийте вхід із застосунку Marki ще раз.</p>
       ) : state === 'done' ? (
         <>
-          <p>Готово ✅ Повертаємо вас у застосунок…</p>
+          <p>Готово ✅ Тепер поверніться в застосунок Marki — або просто закрийте цю вкладку.</p>
           <a className="btn btn-primary btn-block" href={back}>Повернутися в Marki</a>
         </>
       ) : (
