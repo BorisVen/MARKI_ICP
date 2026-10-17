@@ -14,10 +14,10 @@ const openRoute = (search: string) => {
 
 const HISTORY_KEY = 'marki.viewed';
 /** Posts this device viewed, newest first: a personal convenience, kept locally. */
-function readHistory(): string[] {
+export function readHistory(): string[] {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]'); } catch { return []; }
 }
-function remember(id: string) {
+export function remember(id: string) {
   try { localStorage.setItem(HISTORY_KEY, JSON.stringify([id, ...readHistory().filter(x => x !== id)].slice(0, 60))); } catch { /* storage blocked */ }
 }
 
@@ -28,7 +28,13 @@ const short = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 
  * sit on the right (follow, like, comments, repost, share); title, price, «Купити»
  * and «Паспорт» at the bottom.
  */
-export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void }) {
+export default function ReelsPage({ onJumpTo, startId, onBack }: {
+  onJumpTo: (p: PageId) => void;
+  /** Opened from the marketplace on this post. */
+  startId?: string | null;
+  /** Back to the marketplace (shown when opened from it). */
+  onBack?: () => void;
+}) {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +53,13 @@ export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void 
     );
     root.querySelectorAll('.reel[data-id]').forEach(el => io.observe(el));
     return () => io.disconnect();
+  }, [posts]);
+
+  // Opened on a post from the marketplace: start there.
+  useEffect(() => {
+    if (!startId || !posts?.length) return;
+    feed.current?.querySelector(`[data-id="${CSS.escape(startId)}"]`)?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts]);
 
   const jumpTo = (id: string) => {
@@ -77,7 +90,7 @@ export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void 
           <div style={{ textAlign: 'center', padding: 24 }}>
             <div style={{ fontSize: 40 }}>🛍️</div>
             <p>{error ?? 'Поки що тут порожньо.'}</p>
-            <button className="btn btn-primary" onClick={() => onJumpTo('home')}>До маркету</button>
+            <button className="btn btn-primary" onClick={() => (onBack ? onBack() : onJumpTo('home'))}>До маркету</button>
           </div>
         </div>
       </div>
@@ -88,8 +101,10 @@ export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void 
     <>
       <div className="reels-wrap">
         <div className="reels-top">
-          <button className="reels-icon" onClick={() => setPanel('history')} aria-label="Історія переглядів"><Icon.Clock size={24} /></button>
-          <span className="reels-label">Маркет</span>
+          {onBack
+            ? <button className="reels-icon" onClick={onBack} aria-label="До маркету"><Icon.Back size={24} /></button>
+            : <button className="reels-icon" onClick={() => setPanel('history')} aria-label="Історія переглядів"><Icon.Clock size={24} /></button>}
+          <span className="reels-label">Стрічка</span>
           <button className="reels-icon" onClick={() => setPanel('search')} aria-label="Пошук"><Icon.Search size={24} /></button>
         </div>
       <div className="reels" ref={feed}>
@@ -188,7 +203,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
   );
 }
 
-function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose: () => void; onChange: (p: Post) => void }) {
+export function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose: () => void; onChange: (p: Post) => void }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const send = async () => {

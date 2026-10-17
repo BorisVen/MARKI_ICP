@@ -35,7 +35,8 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Покупки',
     items: [
-      { id: 'reels',  label: 'Маркет',           icon: <Icon.Store />,  mobile: true },
+      { id: 'home',   label: 'Маркет',           icon: <Icon.Store />,  mobile: true },
+      { id: 'reels',  label: 'Стрічка',          icon: <Icon.Play /> },
       { id: 'scan',   label: 'Сканувати QR',     icon: <Icon.QrCode />, mobile: true, short: 'Сканер' },
       { id: 'orders', label: 'Замовлення',       icon: <Icon.Truck /> },
       { id: 'verify', label: 'Перевірити за NFC', icon: <Icon.Scan /> },
@@ -156,8 +157,8 @@ export default function Shell({ page, setPage, title, children }: Props) {
 
       <nav className="mobile-nav">
         {/* Scan sits in the middle as a round button: the one action buyers need most. */}
-        {/* Market (swipe feed) · Scanner · [Create NFT] · Inbox · Profile; the rest lives in Profile. */}
-        {(['reels', 'scan', 'create', 'notifications', 'profile'] as PageId[]).map(id => {
+        {/* Market · Scanner · [Create NFT] · Inbox · Profile; the feed opens from the market. */}
+        {(['home', 'scan', 'create', 'notifications', 'profile'] as PageId[]).map(id => {
           const item = ALL_NAV.find(i => i.id === id)!;
           const label = id === 'notifications' ? 'Вхідні' : id === 'create' ? 'Створити' : (item.short ?? item.label);
           return (

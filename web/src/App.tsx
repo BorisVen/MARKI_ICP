@@ -84,8 +84,10 @@ export default function App() {
 function MarkiApp() {
   const { fbUser, user, loading, error, needsRegistration, reload, logout } = useAuth();
   // The swipe feed opens first, as in TikTok / Instagram.
+  // The feed opened from the marketplace starts on the tapped item.
+  const [reelStart, setReelStart] = useState<string | null>(null);
   // Back from a card payment (`?paid=…`): straight to «Тарифи» to see the result.
-  const [page, setPage] = useState<PageId>(() => (new URLSearchParams(window.location.search).has('paid') ? 'plans' : 'reels'));
+  const [page, setPage] = useState<PageId>(() => (new URLSearchParams(window.location.search).has('paid') ? 'plans' : 'home'));
   const [route, setRoute] = useState<PublicRoute | null>(() => readPublicRoute());
   // A guest on a public page asked to sign in (or sign up).
   const [authMode, setAuthMode] = useState<'login' | 'signup' | null>(null);
@@ -169,9 +171,9 @@ function MarkiApp() {
 
   return (
     <Shell page={page} setPage={setPage} title={PAGE_TITLES[page]}>
-      {page === 'reels'         && <ReelsPage onJumpTo={setPage} />}
+      {page === 'reels'         && <ReelsPage onJumpTo={setPage} startId={reelStart} onBack={() => setPage('home')} />}
       {page === 'scan'          && <ScanPage onJumpTo={setPage} />}
-      {page === 'home'          && <HomePage onJumpTo={setPage} />}
+      {page === 'home'          && <HomePage onJumpTo={setPage} onOpenFeed={id => { setReelStart(id ?? null); setPage('reels'); }} />}
       {page === 'nfts'          && <MyNftsPage onJumpTo={setPage} />}
       {page === 'orders'        && <OrdersPage onJumpTo={setPage} />}
       {page === 'verify'        && <VerifyPage onJumpTo={setPage} />}

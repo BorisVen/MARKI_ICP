@@ -2517,3 +2517,39 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .open-in-app { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 8px 12px; padding-top: calc(8px + var(--safe-area-inset-top, 0px)); background: var(--card); border-bottom: 1px solid var(--border); font-size: 14px; }
 .open-in-app span { flex: 1; font-weight: 600; }
 .open-in-app .btn { padding: 6px 14px; }
+
+/* ── Marketplace (as in the Solana app) ─────────────────────────────────── */
+.mk { max-width: 640px; margin: 0 auto; }
+.mk-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mk-head h1 { margin: 0; font-size: 30px; line-height: 1.05; letter-spacing: -0.03em; }
+.mk-head h1 span { display: block; color: var(--primary); }
+.mk-feed-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: inherit; font: 600 14px inherit; cursor: pointer; }
+.mk-search { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--card); color: var(--muted); }
+.mk-search input { flex: 1; border: 0; outline: 0; background: transparent; color: var(--text, inherit); font-size: 14px; padding: 0; }
+.mk-chips { margin-bottom: 14px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.mk-chips .chip { flex-shrink: 0; }
+.mk-list { display: flex; flex-direction: column; gap: 14px; }
+.mk-card { padding: 0; overflow: hidden; }
+.mk-media { position: relative; display: block; width: 100%; padding: 0; border: 0; background: var(--bg); cursor: pointer; }
+.mk-media > img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.mk-gallery { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; padding: 6px; aspect-ratio: 4 / 3; }
+.mk-gallery img { width: 100%; height: 100%; min-height: 0; object-fit: cover; border-radius: 11px; }
+.mk-gallery.n2 img { grid-row: 1 / -1; }
+.mk-gallery.n3 img:first-child { grid-row: 1 / 3; }
+.mk-pill { position: absolute; top: 12px; right: 12px; padding: 6px 11px; border-radius: 999px; background: rgba(11,15,20,0.78); backdrop-filter: blur(10px); color: #fff; font-size: 12px; font-weight: 800; }
+.mk-pill.left { left: 12px; right: auto; }
+.mk-play { position: absolute; bottom: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: rgba(11,15,20,0.6); color: #fff; }
+.mk-body { padding: 13px; }
+.mk-title { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mk-author { display: flex; align-items: center; gap: 7px; margin-top: 7px; font-size: 13px; font-weight: 700; min-width: 0; }
+.mk-avatar { width: 24px; height: 24px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 11px; flex-shrink: 0; }
+.mk-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mk-price-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--border); }
+.mk-price-row .btn { padding: 11px 20px; font-weight: 800; min-width: 104px; justify-content: center; }
+.mk-caption { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.mk-price { font-size: 20px; font-weight: 700; margin-top: 2px; }
+.mk-status { font-size: 14px; font-weight: 800; color: var(--muted); margin-top: 2px; }
+.mk-actions { display: flex; align-items: center; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.mk-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.mk-actions button.on { color: var(--danger, #ef4444); }
+.mk-actions span { margin-left: auto; font-size: 11px; }
