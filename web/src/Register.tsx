@@ -1,17 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiRegister } from './api';
 import { useAuth } from './auth';
 
-/** Second sign-up step: the Marki profile (name, nickname, phone). */
+/**
+ * Second sign-up step: the Marki profile. Google already gave us a name and an
+ * email, so Google sign-ups get their profile created right away; the form only
+ * shows for email sign-ups (or if that fails). The phone is asked at checkout.
+ */
 export default function Register() {
   const { fbUser, reload, logout } = useAuth();
   const [name, setName] = useState(fbUser?.displayName ?? '');
   const [username, setUsername] = useState(
     (fbUser?.email ?? '').split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase(),
   );
-  const [phone, setPhone] = useState(fbUser?.phoneNumber ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fromGoogle = !!fbUser?.providerData.some(p => p.providerId === 'google.com') && !!fbUser?.displayName;
+  const [auto, setAuto] = useState(fromGoogle);
+  const started = useRef(false);
+
+  const create = async (n: string, u: string) => {
+    await apiRegister({ uid: fbUser!.uid, email: fbUser!.email ?? '', name: n.trim(), username: u.trim().replace(/^@/, '') });
+    await reload();
+  };
+
+  useEffect(() => {
+    if (!fromGoogle || started.current) return;
+    started.current = true;
+    create(name || 'Marki', username || `user${fbUser!.uid.slice(0, 6).toLowerCase()}`)
+      .catch(() => setAuto(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,20 +41,15 @@ export default function Register() {
     setBusy(true);
     setError(null);
     try {
-      await apiRegister({
-        uid: fbUser!.uid,
-        email: fbUser!.email ?? '',
-        name: name.trim(),
-        username: username.trim().replace(/^@/, ''),
-        phone: phone.trim() || undefined,
-      });
-      await reload();
+      await create(name, username);
     } catch (err: any) {
       setError(err?.message ?? 'Не вдалося створити профіль');
     } finally {
       setBusy(false);
     }
   };
+
+  if (auto) return <div className="spinner">Створюємо профіль…</div>;
 
   return (
     <div className="login-shell">
@@ -50,10 +64,6 @@ export default function Register() {
           <div className="field">
             <label>Нікнейм</label>
             <input value={username} onChange={e => setUsername(e.target.value)} placeholder="olena" />
-          </div>
-          <div className="field">
-            <label>Телефон <span className="muted">(для доставки, необов’язково)</span></label>
-            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+380 67 123 45 67" autoComplete="tel" inputMode="tel" />
           </div>
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
             {busy ? 'Створюємо профіль…' : 'Почати'}
