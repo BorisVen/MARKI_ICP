@@ -8,6 +8,7 @@ import type { PageId } from '../Shell';
 import { GridSkeleton } from '../Skeleton';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 import { needsConfirm, useMyOrders } from './OrdersPage';
+import { publicUrl } from '../publicUrl';
 import { CommentsSheet, readHistory, remember } from './ReelsPage';
 
 const DONE = ['delivered', 'verified', 'completed', 'cancelled'];
@@ -166,7 +167,7 @@ function MarketCard({ post, uid, onChange, onFeed, onBuy, onComments }: {
     try { onChange(await apiLikePost(post.id)); } catch { onChange(post); }
   };
   const share = async () => {
-    const url = `${window.location.origin}${import.meta.env.BASE_URL}${passport}`;
+    const url = publicUrl(passport);
     if (navigator.share) { try { await navigator.share({ title: postTitle(post), url }); return; } catch { /* cancelled */ } }
     await navigator.clipboard?.writeText(url);
   };

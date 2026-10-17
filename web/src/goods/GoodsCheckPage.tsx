@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../auth';
 import { fmtDateTime } from '../format';
 import Logo from '../Logo';
+import { publicUrl } from '../publicUrl';
 import { CATEGORY, EVENT, STAGE } from './labels';
 
 /** Reads the first QR code in a photo (the fiscal receipt). */
@@ -35,7 +36,7 @@ const country = (r: string) => COUNTRY[r] ?? r.split('/').pop()?.replace(/_/g, '
 
 /** Link that hands an item over to someone else (gift). */
 const transferUrl = (code: string, token: string) =>
-  `${window.location.origin}${import.meta.env.BASE_URL}?v=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}`;
+  publicUrl(`?v=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}`);
 
 /** Public check page opened from a product QR (`?v=CODE`, `&t=TOKEN` for a handover). */
 export default function GoodsCheckPage({ code, transferToken, onClose, onSignIn }: {

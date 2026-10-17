@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
+import { publicUrl } from './publicUrl';
 import { Icon } from './icons';
 
 /** Public profile link that the QR code encodes. */
-export const profileUrl = (username: string) => `${window.location.origin}${import.meta.env.BASE_URL}?u=${encodeURIComponent(username)}`;
+export const profileUrl = (username: string) => publicUrl(`?u=${encodeURIComponent(username)}`);
 
 const BACKGROUNDS = [
   'linear-gradient(160deg, #1f4fd1 0%, #4f8cff 45%, #22c55e 100%)',

@@ -4,6 +4,7 @@ import { useAuth } from '../auth';
 import { fmtAgo, fmtPrice, plural } from '../format';
 import { Icon } from '../icons';
 import type { PageId } from '../Shell';
+import { publicUrl } from '../publicUrl';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 
 /** Opens a public page of the app (passport, profile) the way a QR link would. */
@@ -157,7 +158,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
   };
   const passportSearch = nftId ? `?nft=${encodeURIComponent(nftId)}&owner=${encodeURIComponent(post.userId)}` : '';
   const share = async () => {
-    const url = `${window.location.origin}${import.meta.env.BASE_URL}${passportSearch}`;
+    const url = publicUrl(passportSearch);
     const title = postTitle(post);
     if (navigator.share) { try { await navigator.share({ title, text: `${title} — у Marki`, url }); return; } catch { /* cancelled */ } }
     await navigator.clipboard?.writeText(url);
