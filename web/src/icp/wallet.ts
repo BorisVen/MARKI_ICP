@@ -1,6 +1,8 @@
 import { Actor, HttpAgent, type ActorSubclass } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
+import type { Identity } from '@dfinity/agent';
+import { iiIdentity } from './ii';
 
 export const ICP_HOST = (import.meta.env.VITE_ICP_HOST as string) || 'https://icp0.io';
 export const IS_LOCAL_NETWORK = /localhost|127\.0\.0\.1/.test(ICP_HOST);
@@ -11,7 +13,7 @@ export const LEDGER_CANISTER_ID =
 /** What the payments ledger is called: test tokens until the switch to real ICP. */
 export const TOKEN = LEDGER_CANISTER_ID === 'xafvr-biaaa-aaaai-aql5q-cai' ? 'TESTICP' : 'ICP';
 
-export type WalletKind = 'plug' | 'dev' | 'marki';
+export type WalletKind = 'plug' | 'dev' | 'marki' | 'ii';
 
 export type Wallet = {
   kind: WalletKind;
@@ -59,6 +61,21 @@ export async function connectMarkiWallet(seedHex: string): Promise<Wallet> {
     principal: identity.getPrincipal().toText(),
     actor: async (canisterId, idl) => Actor.createActor(idl, { agent, canisterId }),
   };
+}
+
+async function identityWallet(kind: WalletKind, identity: Identity): Promise<Wallet> {
+  const agent = await HttpAgent.create({ host: ICP_HOST, identity, shouldFetchRootKey: IS_LOCAL_NETWORK });
+  return {
+    kind,
+    principal: identity.getPrincipal().toText(),
+    actor: async (canisterId, idl) => Actor.createActor(idl, { agent, canisterId }),
+  };
+}
+
+/** The user's own wallet (Internet Identity); null when signed out and not `interactive`. */
+export async function connectInternetIdentity(interactive: boolean): Promise<Wallet | null> {
+  const identity = await iiIdentity(interactive);
+  return identity ? identityWallet('ii', identity) : null;
 }
 
 const DEV_IDENTITY_KEY = 'markicp.devIdentity';

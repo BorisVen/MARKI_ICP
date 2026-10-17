@@ -92,8 +92,10 @@ export type User = {
   likesCount?: number;
   savedPosts?: string[];
   repostedPosts?: string[];
-  /** Linked Plug principal: where gifted tokens are sent on-chain. */
+  /** Linked wallet: where gifted tokens are sent on-chain. */
   icpPrincipal?: string;
+  /** "ii" — the user's own Internet Identity wallet; "plug" — Plug. */
+  icpWalletKind?: 'ii' | 'plug';
 };
 
 export type PublicProfile = {
@@ -766,7 +768,8 @@ export const apiSetGiftCollection = (nftIds: string[], value: boolean) =>
 // ── On-chain handover of gifted NFTs ────────────────────────────────────────
 
 /** Link (or with `null` unlink) the Plug principal that receives gifted tokens. */
-export const apiLinkIcpPrincipal = (principal: string | null) => put<void>('/api/me/icp-principal', { principal });
+export const apiLinkIcpPrincipal = (principal: string | null, kind: 'ii' | 'plug' = 'plug') =>
+  put<void>('/api/me/icp-principal', { principal, kind });
 export type PendingOnchain = {
   /** `icp:<canister>:<token>` */
   mintAddress: string;

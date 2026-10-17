@@ -95,7 +95,8 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
 
       // On-chain first: the canister takes the plan credits, so no plan means no NFT.
       const mint = ICP_MINT_ENABLED && wallet
-        ? await mintPhotoOnChain(wallet, image, metadata, copies, t => setBusy(t), user ? await custodyAccount(user.uid) : null)
+        // Own wallets (Internet Identity, Plug) keep their NFTs; the built-in one leaves them with Marki.
+        ? await mintPhotoOnChain(wallet, image, metadata, copies, t => setBusy(t), wallet.kind === 'marki' && user ? await custodyAccount(user.uid) : null)
         : null;
 
       setBusy('Зберігаємо паспорт…');

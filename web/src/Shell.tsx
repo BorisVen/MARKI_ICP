@@ -16,6 +16,7 @@ export type PageId =
   | 'analytics'
   | 'create'
   | 'plans'
+  | 'wallet'
   | 'gifts'
   | 'goods'
   | 'profile';
@@ -48,6 +49,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { id: 'nfts',    label: 'Мої паспорти', icon: <Icon.Box /> },
       { id: 'goods',   label: 'Мої товари',   icon: <Icon.Box /> },
       { id: 'gifts',   label: 'Подарунки',    icon: <Icon.Gift /> },
+      { id: 'wallet',  label: 'Гаманець',     icon: <Icon.Wallet /> },
       { id: 'plans',   label: 'Тарифи',       icon: <Icon.Tag /> },
     ],
   },

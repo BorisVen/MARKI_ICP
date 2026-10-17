@@ -384,11 +384,18 @@ function MenuSheet({ onClose, onJumpTo }: { onClose: () => void; onJumpTo: (p: P
             <div className="drawer-caption">Створення</div>
             <div className="drawer-group">
               {item(<Icon.Plus />, 'Створити NFT', 'Паспорт для твоєї речі', () => onJumpTo('create'))}
-              {item(<Icon.Tag />, 'Тарифи', 'Пакети мінтів у блокчейні ICP', () => onJumpTo('plans'))}
               {item(<Icon.Box />, 'Мої паспорти', null, () => onJumpTo('nfts'))}
               {item(<Icon.Truck />, 'Замовлення', 'Доставка й оплата при отриманні', () => onJumpTo('orders'))}
               {item(<Icon.Box />, 'Мої товари', 'Зареєстровані за чеком', () => onJumpTo('goods'))}
               {item(<Icon.Gift />, 'Подарунки', 'Посилання, QR і хто забрав', () => onJumpTo('gifts'))}
+            </div>
+
+            <div className="drawer-caption">Гаманець</div>
+            <div className="drawer-group">
+              {item(<Icon.Wallet />, 'Мій гаманець', user!.icpWalletKind === 'ii'
+                ? `Internet Identity · ${user!.icpPrincipal!.slice(0, 5)}…${user!.icpPrincipal!.slice(-3)}`
+                : 'Створіть свій — NFT будуть тільки ваші', () => onJumpTo('wallet'))}
+              {item(<Icon.Tag />, 'Тарифи', 'Пакети мінтів у блокчейні ICP', () => onJumpTo('plans'))}
             </div>
 
             <div className="drawer-caption">Статистика</div>

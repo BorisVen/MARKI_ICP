@@ -134,6 +134,7 @@ export interface PaymentsService {
   mint_uploaded_to: (uploadId: bigint, metadata: string, copies: number, to: [] | [Account]) => Promise<Res<MintResult>>;
   config: () => Promise<{ ledger: Principal; ledger_fee_e8s: bigint; platform_fee_bps: number; custodian: [] | [Principal] }>;
   icrc7_transfer: (args: Icrc7TransferArg[]) => Promise<([] | [{ Ok: bigint } | { Err: Icrc7TransferError }])[]>;
+  move_plan: (to: Principal) => Promise<Res<Subscription>>;
 }
 
 export type Icrc7TransferArg = {
@@ -234,6 +235,7 @@ export const paymentsIdl: IDLType.InterfaceFactory = ({ IDL }) => {
     plans: IDL.Func([], [res(IDL.Vec(PlanQuote))], ['query']),
     buy_plan: IDL.Func([IDL.Text, IDL.Nat64], [res(Subscription)], []),
     subscription_of: IDL.Func([IDL.Principal], [IDL.Opt(Subscription)], ['query']),
+    move_plan: IDL.Func([IDL.Principal], [res(Subscription)], []),
     purchases_of: IDL.Func([IDL.Principal], [IDL.Vec(PlanPurchase)], ['query']),
     pricing: IDL.Func([], [Pricing], ['query']),
   });

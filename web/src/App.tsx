@@ -16,6 +16,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 // ICP wallet code is heavy and only these pages need it: load them on demand.
 const CreateNftPage = lazy(() => import('./pages/CreateNftPage'));
 const PlansPage = lazy(() => import('./pages/PlansPage'));
+const WalletPage = lazy(() => import('./pages/WalletPage'));
+const IiBridge = lazy(() => import('./IiBridge'));
 import NftViewerPage from './pages/NftViewerPage';
 import GoodsCheckPage from './goods/GoodsCheckPage';
 import MyGoodsPage from './goods/MyGoodsPage';
@@ -39,6 +41,7 @@ const PAGE_TITLES: Record<PageId, string> = {
   analytics:     'Аналітика',
   create:        'Створити NFT',
   plans:         'Тарифи',
+  wallet: 'Гаманець',
   gifts:         'Подарунки',
   goods:         'Мої товари',
 };
@@ -69,7 +72,14 @@ function readPublicRoute(): PublicRoute | null {
 
 initTheme();
 
+// The app's wallet sign-in page (see IiBridge): no account needed, nothing else on it.
+const II_LOGIN = new URLSearchParams(window.location.search).get('ii-login');
+
 export default function App() {
+  return II_LOGIN ? <Suspense fallback={null}><IiBridge sessionKey={II_LOGIN} /></Suspense> : <MarkiApp />;
+}
+
+function MarkiApp() {
   const { fbUser, user, loading, error, needsRegistration, reload, logout } = useAuth();
   // The swipe feed opens first, as in TikTok / Instagram.
   // Back from a card payment (`?paid=…`): straight to «Тарифи» to see the result.
@@ -87,7 +97,7 @@ export default function App() {
   // Signed in: the built-in wallet and phone notifications come up by themselves.
   useEffect(() => {
     if (!user) return;
-    autoConnectWallet();
+    autoConnectWallet(user);
     registerPush(() => setPage('notifications')).catch(() => {});
   }, [user?.uid]);
 
@@ -159,6 +169,7 @@ export default function App() {
       {page === 'profile'       && <ProfilePage onJumpTo={setPage} />}
       {page === 'analytics'     && <AnalyticsPage onJumpTo={setPage} />}
       {page === 'create'        && <Suspense fallback={<div className="spinner">Завантаження…</div>}><CreateNftPage onJumpTo={setPage} /></Suspense>}
+      {page === 'wallet'        && <Suspense fallback={<div className="spinner">Завантаження…</div>}><WalletPage onJumpTo={setPage} /></Suspense>}
       {page === 'plans'         && <Suspense fallback={<div className="spinner">Завантаження…</div>}><PlansPage /></Suspense>}
       {page === 'gifts'         && <GiftsPage />}
       {page === 'goods'         && <MyGoodsPage onOpen={code => { window.history.pushState({}, '', `?v=${encodeURIComponent(code)}`); setRoute({ kind: 'goods', code }); }} />}

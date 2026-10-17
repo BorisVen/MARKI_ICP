@@ -1,4 +1,4 @@
-import { AuthClient } from '@dfinity/auth-client';
+import { iiIdentity } from './ii';
 import { Principal } from '@dfinity/principal';
 import { paymentsIdl, type Account, type PaymentsService } from './idl';
 import { anonymousActor, PAYMENTS_CANISTER_ID } from './wallet';
@@ -36,13 +36,7 @@ export const sameAccount = (a: Account | undefined, b: Account | null) =>
 
 /** Sign in with Internet Identity (Face ID / fingerprint) and return the principal. */
 export async function internetIdentityPrincipal(): Promise<string> {
-  const client = await AuthClient.create();
-  if (await client.isAuthenticated()) return client.getIdentity().getPrincipal().toText();
-  await new Promise<void>((resolve, reject) => client.login({
-    identityProvider: 'https://identity.ic0.app',
-    maxTimeToLive: BigInt(7 * 24 * 3600) * 1_000_000_000n,
-    onSuccess: () => resolve(),
-    onError: e => reject(new Error(e ?? 'Вхід через Internet Identity скасовано')),
-  }));
-  return client.getIdentity().getPrincipal().toText();
+  const identity = await iiIdentity(true);
+  if (!identity) throw new Error('Вхід через Internet Identity скасовано');
+  return identity.getPrincipal().toText();
 }
