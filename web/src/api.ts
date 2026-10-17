@@ -192,7 +192,7 @@ export type Post = {
   tags?: string[];
   likes?: number;
   likedBy?: string[];
-  comments?: { id: string; userId: string; text: string; createdAt: string }[];
+  comments?: { id: string; userId: string; userName?: string; userAvatar?: string; text: string; createdAt: string }[];
   createdAt: string;
 };
 
@@ -287,7 +287,9 @@ export type Notification = {
   id: string;
   type: string;
   title: string;
-  body: string;
+  /** What the server sends; `body` is the older name. */
+  text?: string;
+  body?: string;
   read: boolean;
   createdAt: string;
   data?: Record<string, unknown>;

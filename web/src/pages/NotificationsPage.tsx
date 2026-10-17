@@ -90,10 +90,10 @@ export default function NotificationsPage() {
                 <span style={{ fontSize: 22, lineHeight: 1 }}>{t?.icon ?? '📌'}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 14, margin: 0 }}>{t?.title ?? n.title}</h3>
+                    <h3 style={{ fontSize: 14, margin: 0 }}>{n.title || t?.title}</h3>
                     {!n.read && <span className="unread-dot" style={{ marginTop: 0 }} title="Непрочитане" />}
                   </div>
-                  {n.body && <p className="sub" style={{ fontSize: 13, margin: '4px 0' }}>{n.body}</p>}
+                  {(n.text ?? n.body) && <p className="sub" style={{ fontSize: 13, margin: '4px 0' }}>{n.text ?? n.body}</p>}
                   <div className="sub" style={{ fontSize: 11 }} title={fmtDateTime(n.createdAt)}>{fmtAgo(n.createdAt)}</div>
                 </div>
                 <button

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiAddComment, apiFollow, apiGetPosts, apiLikePost, apiRepostPost, type Post } from '../api';
 import { useAuth } from '../auth';
-import { fmtAgo, fmtPrice } from '../format';
+import { fmtAgo, fmtPrice, plural } from '../format';
 import { Icon } from '../icons';
 import type { PageId } from '../Shell';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
@@ -203,28 +203,90 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
   );
 }
 
+const QUICK = ['❤️', '🔥', '😍', '👏', '😂', '😮', '🙌'];
+
+/** Comments, TikTok-style: who wrote what, quick emoji, a send button that wakes up when there is text. */
 export function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose: () => void; onChange: (p: Post) => void }) {
+  const { user } = useAuth();
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const send = async () => {
-    if (!text.trim()) return;
-    setBusy(true);
-    try { onChange(await apiAddComment(post.id, text.trim())); setText(''); } catch (e: any) { alert(e?.message ?? 'Не вдалося'); } finally { setBusy(false); }
-  };
+  const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
   const list = [...(post.comments ?? [])].reverse();
+  const can = !!user && !!text.trim() && !busy;
+
+  const send = async () => {
+    if (!can) return;
+    setBusy(true);
+    setError(null);
+    try {
+      onChange(await apiAddComment(post.id, text.trim()));
+      setText('');
+    } catch (e: any) {
+      setError(e?.message ?? 'Не вдалося надіслати');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet reel-comments" onClick={e => e.stopPropagation()}>
+      <div className="sheet rc-sheet" onClick={e => e.stopPropagation()}>
         <div className="sheet-handle" />
-        <h3 style={{ margin: '4px 0 10px', textAlign: 'center', fontSize: 15 }}>Коментарі · {list.length}</h3>
+        <div className="rc-head">
+          <strong>{list.length ? `${list.length} ${plural(list.length, 'коментар', 'коментарі', 'коментарів')}` : 'Коментарі'}</strong>
+          <button className="rc-close" onClick={onClose} aria-label="Закрити">✕</button>
+        </div>
+
         <div className="rc-list">
-          {list.length === 0 ? <p className="muted" style={{ textAlign: 'center' }}>Будьте першим 👋</p> : list.map(c => (
-            <div key={c.id} className="rc-item"><span>{c.text}</span><small className="muted">{fmtAgo(c.createdAt)}</small></div>
+          {list.length === 0 ? (
+            <div className="rc-empty">
+              <div>💬</div>
+              <strong>Ще немає коментарів</strong>
+              <span>Будьте першим — напишіть, що думаєте</span>
+            </div>
+          ) : list.map(c => {
+            const name = c.userName || (c.userId === user?.uid ? user?.name : '') || 'Користувач Marki';
+            const avatar = c.userAvatar || (c.userId === user?.uid ? user?.avatar : '');
+            const author = c.userId === post.userId;
+            return (
+              <div key={c.id} className="rc-item">
+                <span className="rc-avatar">{avatar ? <img src={avatar} alt="" /> : name.slice(0, 1).toUpperCase()}</span>
+                <div className="rc-body">
+                  <div className="rc-meta">
+                    <strong>{name}</strong>
+                    {author && <span className="rc-badge">автор</span>}
+                    {c.userId === user?.uid && !author && <span className="rc-you">ви</span>}
+                  </div>
+                  <div className="rc-text">{c.text}</div>
+                  <div className="rc-time">{fmtAgo(c.createdAt)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {error && <div className="rc-error">{error}</div>}
+        <div className="rc-quick">
+          {QUICK.map(e => (
+            <button key={e} onClick={() => { setText(t => t + e); input.current?.focus(); }}>{e}</button>
           ))}
         </div>
         <div className="rc-input">
-          <input value={text} onChange={e => setText(e.target.value)} placeholder="Додати коментар…" maxLength={500} onKeyDown={e => e.key === 'Enter' && send()} />
-          <button className="btn btn-primary" onClick={send} disabled={busy || !text.trim()}>Надіслати</button>
+          <span className="rc-avatar">{user?.avatar ? <img src={user.avatar} alt="" /> : (user?.name || 'M').slice(0, 1).toUpperCase()}</span>
+          <input
+            ref={input}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder={user ? 'Додати коментар…' : 'Увійдіть, щоб коментувати'}
+            disabled={!user}
+            maxLength={500}
+            enterKeyHint="send"
+            onKeyDown={e => e.key === 'Enter' && send()}
+          />
+          <button className={`rc-send ${can ? 'on' : ''}`} onClick={send} disabled={!can} aria-label="Надіслати">
+            {busy ? <span className="mini-spin" /> : <Icon.Send size={20} />}
+          </button>
         </div>
       </div>
     </div>

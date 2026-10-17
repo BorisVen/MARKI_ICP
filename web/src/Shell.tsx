@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import TopToast, { showToast } from './TopToast';
 import { Icon } from './icons';
 import { useAuth } from './auth';
 import { apiGetNotifications } from './api';
@@ -80,14 +81,22 @@ export default function Shell({ page, setPage, title, children }: Props) {
   // Each page shows its own heading; the title goes to the browser tab.
   useEffect(() => { document.title = `${title} · Marki`; }, [title]);
 
-  // Unread badge: refresh on page change and every minute.
+  // Unread badge, and a banner for anything new (also on the web, where there is no push).
+  const known = useRef<Set<string> | null>(null);
   useEffect(() => {
     let cancelled = false;
     const load = () => apiGetNotifications()
-      .then(n => { if (!cancelled) setUnread(n.filter(x => !x.read).length); })
+      .then(n => {
+        if (cancelled) return;
+        setUnread(n.filter(x => !x.read).length);
+        const fresh = known.current ? n.filter(x => !x.read && !known.current!.has(x.id)) : [];
+        known.current = new Set(n.map(x => x.id));
+        const newest = fresh.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+        if (newest) showToast({ id: newest.id, title: newest.title, text: newest.text ?? newest.body, type: newest.type });
+      })
       .catch(() => {});
     load();
-    const t = window.setInterval(load, 60_000);
+    const t = window.setInterval(() => { if (document.visibilityState === 'visible') load(); }, 15_000);
     return () => { cancelled = true; window.clearInterval(t); };
   }, [page]);
 
@@ -154,6 +163,8 @@ export default function Shell({ page, setPage, title, children }: Props) {
           </div>
         </div>
       )}
+
+      <TopToast onOpen={() => go('notifications')} />
 
       <nav className="mobile-nav">
         {/* Scan sits in the middle as a round button: the one action buyers need most. */}
