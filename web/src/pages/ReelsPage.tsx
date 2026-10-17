@@ -12,6 +12,15 @@ const openRoute = (search: string) => {
   window.dispatchEvent(new PopStateEvent('popstate'));
 };
 
+const HISTORY_KEY = 'marki.viewed';
+/** Posts this device viewed, newest first: a personal convenience, kept locally. */
+function readHistory(): string[] {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]'); } catch { return []; }
+}
+function remember(id: string) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify([id, ...readHistory().filter(x => x !== id)].slice(0, 60))); } catch { /* storage blocked */ }
+}
+
 const short = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K` : String(n));
 
 /**
@@ -25,6 +34,25 @@ export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void 
   const [error, setError] = useState<string | null>(null);
   const [buying, setBuying] = useState<Post | null>(null);
   const [comments, setComments] = useState<Post | null>(null);
+  const [panel, setPanel] = useState<'search' | 'history' | null>(null);
+  const feed = useRef<HTMLDivElement>(null);
+
+  // A reel counts as viewed once it fills most of the screen.
+  useEffect(() => {
+    const root = feed.current;
+    if (!root || !posts?.length) return;
+    const io = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) remember((e.target as HTMLElement).dataset.id!); }),
+      { root, threshold: 0.7 },
+    );
+    root.querySelectorAll('.reel[data-id]').forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [posts]);
+
+  const jumpTo = (id: string) => {
+    setPanel(null);
+    feed.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+  };
 
   const load = useCallback(async () => {
     setError(null);
@@ -58,11 +86,19 @@ export default function ReelsPage({ onJumpTo }: { onJumpTo: (p: PageId) => void 
 
   return (
     <>
-      <div className="reels">
+      <div className="reels-wrap">
+        <div className="reels-top">
+          <button className="reels-icon" onClick={() => setPanel('history')} aria-label="Історія переглядів"><Icon.Clock size={24} /></button>
+          <span className="reels-label">Маркет</span>
+          <button className="reels-icon" onClick={() => setPanel('search')} aria-label="Пошук"><Icon.Search size={24} /></button>
+        </div>
+      <div className="reels" ref={feed}>
         {posts.map(p => (
           <Reel key={p.id} post={p} uid={user?.uid} onChange={update} onBuy={() => setBuying(p)} onComments={() => setComments(p)} />
         ))}
       </div>
+      </div>
+      {panel && <FindSheet mode={panel} posts={posts} onPick={jumpTo} onClose={() => setPanel(null)} />}
       {buying && <ProductModal post={buying} onClose={() => setBuying(null)} onOrdered={() => { setBuying(null); onJumpTo('orders'); }} />}
       {comments && <CommentsSheet post={comments} onClose={() => setComments(null)} onChange={p => { update(p); setComments(p); }} />}
     </>
@@ -113,7 +149,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
   };
 
   return (
-    <section className="reel">
+    <section className="reel" data-id={post.id}>
       <div className="reel-media" onClick={tap}>
         <img className="reel-bg" src={image} alt="" aria-hidden />
         <img className="reel-img" src={image} alt={postTitle(post)} loading="lazy" />
@@ -174,6 +210,36 @@ function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose: () =>
         <div className="rc-input">
           <input value={text} onChange={e => setText(e.target.value)} placeholder="Додати коментар…" maxLength={500} onKeyDown={e => e.key === 'Enter' && send()} />
           <button className="btn btn-primary" onClick={send} disabled={busy || !text.trim()}>Надіслати</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Search (top right) and view history (top left) over the feed. */
+function FindSheet({ mode, posts, onPick, onClose }: { mode: 'search' | 'history'; posts: Post[]; onPick: (id: string) => void; onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const query = q.trim().toLowerCase();
+  const list = mode === 'history'
+    ? readHistory().map(id => posts.find(p => p.id === id)).filter((p): p is Post => !!p)
+    : posts.filter(p => !query || [postTitle(p), postAuthor(p), p.description, p.text, ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(query)));
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet reel-find" onClick={e => e.stopPropagation()}>
+        <div className="sheet-handle" />
+        {mode === 'search'
+          ? <input className="rf-input" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Товари, бренди, #теги" />
+          : <h3 style={{ margin: '4px 0 10px', textAlign: 'center', fontSize: 15 }}>Ви переглядали</h3>}
+        <div className="rf-grid">
+          {list.length === 0
+            ? <p className="muted" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>{mode === 'history' ? 'Історія порожня — гортайте маркет 🙂' : 'Нічого не знайдено'}</p>
+            : list.map(p => (
+              <button key={p.id} className="rf-item" onClick={() => onPick(p.id)}>
+                <img src={postImage(p)} alt="" loading="lazy" />
+                <span>{postTitle(p)}</span>
+                {p.forSale && p.price != null && <strong>{fmtPrice(p.price, p.currency)}</strong>}
+              </button>
+            ))}
         </div>
       </div>
     </div>

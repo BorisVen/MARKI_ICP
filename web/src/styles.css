@@ -2467,3 +2467,24 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .scan-hint { position: absolute; left: 16px; right: 16px; bottom: 16px; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
 .scan-foreign { position: absolute; left: 12px; right: 12px; top: 12px; background: rgba(245,165,36,.92); color: #111; padding: 10px 12px; border-radius: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
 .scan-foreign small { opacity: .75; word-break: break-all; }
+
+/* Feed overlay: history (left), title, search (right) — like TikTok's top bar */
+.reels-wrap { position: relative; }
+.reels-top { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: linear-gradient(rgba(0,0,0,.45), transparent); pointer-events: none; }
+.reels-top > * { pointer-events: auto; }
+.reels-icon { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(0,0,0,.25); color: #fff; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+.reels-label { color: #fff; font-weight: 700; font-size: 16px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.reel-find { max-height: 80dvh; display: flex; flex-direction: column; }
+.rf-input { margin-bottom: 10px; }
+.rf-grid { overflow-y: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-bottom: 8px; }
+.rf-item { display: flex; flex-direction: column; gap: 3px; text-align: left; background: none; border: none; color: var(--text); padding: 0; font-size: 12px; }
+.rf-item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; background: var(--bg-soft); }
+.rf-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rf-item strong { font-size: 12px; }
+@media (max-width: 860px) {
+  /* Market feed takes the whole screen on phones (no app header), like TikTok. */
+  .shell:has(.reels) .topbar { display: none; }
+  .shell:has(.reels) .reels { --reel-h: calc(100dvh - var(--mobile-nav-h) - var(--inset-bottom)); }
+  .shell:has(.reels) .reels-top { padding-top: calc(10px + var(--inset-top)); }
+  .shell:has(.reels) .reel-info { bottom: 16px; }
+}

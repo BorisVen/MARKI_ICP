@@ -46,6 +46,8 @@ export const Icon = {
     wrap(<><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><path d="M7 12h10" /></>, size),
   Play: ({ size }: IconProps = {}) =>
     wrap(<path d="M6 4l14 8-14 8z" />, size),
+  Clock: ({ size }: IconProps = {}) =>
+    wrap(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>, size),
   Menu: ({ size }: IconProps = {}) =>
     wrap(<><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /></>, size),
   Edit: ({ size }: IconProps = {}) =>

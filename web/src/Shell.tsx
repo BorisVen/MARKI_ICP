@@ -34,8 +34,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Покупки',
     items: [
-      { id: 'reels',  label: 'Стрічка',          icon: <Icon.Play />,   mobile: true },
-      { id: 'home',   label: 'Маркет',           icon: <Icon.Store />,  mobile: true },
+      { id: 'reels',  label: 'Маркет',           icon: <Icon.Store />,  mobile: true },
       { id: 'scan',   label: 'Сканувати QR',     icon: <Icon.QrCode />, mobile: true, short: 'Сканер' },
       { id: 'orders', label: 'Замовлення',       icon: <Icon.Truck /> },
       { id: 'verify', label: 'Перевірити за NFC', icon: <Icon.Scan /> },
@@ -55,7 +54,6 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Спільнота',
     items: [
-      { id: 'feed',          label: 'Стрічка',    icon: <Icon.Feed /> },
       { id: 'notifications', label: 'Сповіщення', icon: <Icon.Bell /> },
     ],
   },
@@ -156,14 +154,14 @@ export default function Shell({ page, setPage, title, children }: Props) {
 
       <nav className="mobile-nav">
         {/* Scan sits in the middle as a round button: the one action buyers need most. */}
-        {/* Feed · Market · [Scanner] · Inbox · Profile — like TikTok / Instagram; the rest lives in Profile. */}
-        {(['reels', 'home', 'scan', 'notifications', 'profile'] as PageId[]).map(id => {
+        {/* Market (swipe feed) · Scanner · [Create NFT] · Inbox · Profile; the rest lives in Profile. */}
+        {(['reels', 'scan', 'create', 'notifications', 'profile'] as PageId[]).map(id => {
           const item = ALL_NAV.find(i => i.id === id)!;
-          const label = id === 'notifications' ? 'Вхідні' : (item.short ?? item.label);
+          const label = id === 'notifications' ? 'Вхідні' : id === 'create' ? 'Створити' : (item.short ?? item.label);
           return (
             <button
               key={id}
-              className={`nav-item ${id === 'scan' ? 'nav-fab' : ''} ${page === id ? 'active' : ''}`}
+              className={`nav-item ${id === 'create' ? 'nav-fab' : ''} ${page === id ? 'active' : ''}`}
               onClick={() => go(id)}
             >
               <span className="ic">{item.icon}</span>
