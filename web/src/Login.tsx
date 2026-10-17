@@ -1,9 +1,11 @@
+import { nativeGoogleIdToken } from './native/googleSignIn';
 import { useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithCredential,
   signInWithPopup,
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -65,7 +67,9 @@ export default function Login({ initialMode = 'login', onBack }: {
     setBusy(true);
     setError(null);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const idToken = await nativeGoogleIdToken();
+      if (idToken) await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+      else await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (err: any) {
       setError(authErrorMessage(err));
     } finally {

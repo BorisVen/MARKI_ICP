@@ -35,3 +35,12 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Android: signing and Firebase config stay local
+android/keystore.properties
+android/app/google-services.json
+*.jks
+*.keystore
+*.apk
+*.aab
+release/

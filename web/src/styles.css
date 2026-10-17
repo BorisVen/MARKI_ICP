@@ -2399,3 +2399,15 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .onchain-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 220px; overflow-y: auto; font-size: 13px; }
 .onchain-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .onchain-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* Keep bars clear of the status bar / gesture area (notched iPhones, Android app edge to edge). */
+:root {
+  --inset-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --inset-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+}
+.topbar, .viewer-topbar { padding-top: var(--inset-top); height: calc(var(--topbar-h) + var(--inset-top)); }
+.gc-wrap { padding-top: calc(var(--topbar-h) + var(--inset-top)); }
+@media (max-width: 860px) {
+  .mobile-nav { padding-bottom: var(--inset-bottom); height: calc(var(--mobile-nav-h) + var(--inset-bottom)); }
+  .content { padding-bottom: calc(var(--mobile-nav-h) + 24px + var(--inset-bottom)); }
+}
