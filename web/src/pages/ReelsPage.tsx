@@ -5,6 +5,7 @@ import { fmtAgo, fmtPrice, plural } from '../format';
 import { Icon } from '../icons';
 import type { PageId } from '../Shell';
 import { publicUrl } from '../publicUrl';
+import { openProfile, PeopleRow } from '../People';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 
 /** Opens a public page of the app (passport, profile) the way a QR link would. */
@@ -182,9 +183,9 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
       </div>
 
       <div className="reel-side">
-        <div className="reel-avatar">
+        <div className="reel-avatar" onClick={() => openProfile({ uid: post.userId })} role="button" aria-label="Профіль автора">
           {postAvatar(post) ? <img src={postAvatar(post)} alt="" /> : <span>{postAuthor(post).slice(0, 1).toUpperCase()}</span>}
-          {!mine && !following && <button className="reel-follow" onClick={follow} aria-label="Підписатися">+</button>}
+          {!mine && !following && <button className="reel-follow" onClick={e => { e.stopPropagation(); follow(); }} aria-label="Підписатися">+</button>}
         </div>
         <button className={`reel-act ${liked ? 'on' : ''}`} onClick={like} aria-label="Подобається">
           <Icon.Heart size={30} /><span>{short(post.likes ?? 0)}</span>
@@ -201,7 +202,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
       </div>
 
       <div className="reel-info">
-        <div className="reel-author">@{postAuthor(post)} · <span>{fmtAgo(post.createdAt)}</span></div>
+        <div className="reel-author"><button className="rc-name-btn" onClick={() => openProfile({ uid: post.userId })}>@{postAuthor(post)}</button> · <span>{fmtAgo(post.createdAt)}</span></div>
         <div className="reel-title">{postTitle(post)}</div>
         {(post.description || post.text) && <div className="reel-desc">{post.description || post.text}</div>}
         <div className="reel-buttons">
@@ -261,10 +262,12 @@ export function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose
             const author = c.userId === post.userId;
             return (
               <div key={c.id} className="rc-item">
-                <span className="rc-avatar">{avatar ? <img src={avatar} alt="" /> : name.slice(0, 1).toUpperCase()}</span>
+                <button className="rc-avatar-btn" onClick={() => { onClose(); openProfile({ uid: c.userId }); }} aria-label={`Профіль ${name}`}>
+                  <span className="rc-avatar">{avatar ? <img src={avatar} alt="" /> : name.slice(0, 1).toUpperCase()}</span>
+                </button>
                 <div className="rc-body">
                   <div className="rc-meta">
-                    <strong>{name}</strong>
+                    <button className="rc-name-btn" onClick={() => { onClose(); openProfile({ uid: c.userId }); }}><strong>{name}</strong></button>
                     {author && <span className="rc-badge">автор</span>}
                     {c.userId === user?.uid && !author && <span className="rc-you">ви</span>}
                   </div>
@@ -348,8 +351,9 @@ function FindSheet({ mode, posts, onPick, onClose }: { mode: 'search' | 'history
       <div className="sheet reel-find" onClick={e => e.stopPropagation()}>
         <div className="sheet-handle" />
         {mode === 'search'
-          ? <input className="rf-input" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Товари, бренди, #теги" />
+          ? <input className="rf-input" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Товари, люди, #теги" />
           : <h3 style={{ margin: '4px 0 10px', textAlign: 'center', fontSize: 15 }}>Ви переглядали</h3>}
+        {mode === 'search' && <PeopleRow query={q} />}
         <div className="rf-grid">
           {list.length === 0
             ? <p className="muted" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>{mode === 'history' ? 'Історія порожня — гортайте маркет 🙂' : 'Нічого не знайдено'}</p>

@@ -9,6 +9,7 @@ import { GridSkeleton } from '../Skeleton';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 import { needsConfirm, useMyOrders } from './OrdersPage';
 import { publicUrl } from '../publicUrl';
+import { openProfile, PeopleRow } from '../People';
 import { CommentsSheet, readHistory, remember } from './ReelsPage';
 
 const DONE = ['delivered', 'verified', 'completed', 'cancelled'];
@@ -97,8 +98,10 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
 
       <div className="mk-search">
         <Icon.Search size={17} />
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Шукати NFT, товари, авторів…" />
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Шукати NFT, товари, людей…" />
       </div>
+
+      <PeopleRow query={query} />
 
       {status && (
         <button className={`status-strip ${status.tone}`} onClick={() => onJumpTo('orders')}>
@@ -189,10 +192,10 @@ function MarketCard({ post, uid, onChange, onFeed, onBuy, onComments }: {
 
       <div className="mk-body">
         <div className="mk-title">{postTitle(post)}</div>
-        <div className="mk-author">
+        <button className="mk-author mk-author-btn" onClick={() => openProfile({ uid: post.userId })}>
           <span className="mk-avatar">{postAvatar(post) ? <img src={postAvatar(post)} alt="" /> : postAuthor(post).slice(0, 1).toUpperCase()}</span>
           <span>{postAuthor(post)}</span>
-        </div>
+        </button>
 
         <div className="mk-price-row">
           <div>

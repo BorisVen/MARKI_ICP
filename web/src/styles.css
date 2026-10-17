@@ -2588,3 +2588,17 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .lk-names { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .lk-names small { color: var(--muted); }
 .lk-heart { font-size: 18px; }
+
+/* People in search results */
+.people { margin-bottom: 14px; }
+.people-title { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+.people-row { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.person { flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; border: 1px solid var(--border); background: var(--card); color: inherit; font: inherit; cursor: pointer; }
+.person-avatar { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 20px; }
+.person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.person strong { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person small { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-check { color: var(--primary); margin-left: 3px; }
+.rc-who { display: contents; cursor: pointer; }
+.rc-avatar-btn, .rc-name-btn { border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.mk-author-btn { border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
