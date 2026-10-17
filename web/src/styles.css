@@ -2490,10 +2490,9 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 }
 
 /* ── Гаманець (own ICP wallet) ───────────────────────────────────────────── */
-.wallet-page { max-width: 640px; }
-.wallet-hero { text-align: center; padding: 24px 20px; margin-bottom: 14px; background: linear-gradient(160deg, rgba(59,130,246,0.14), transparent 60%), var(--card); }
-.wallet-hero h3 { margin: 12px 0 6px; font-size: 20px; }
-.wallet-hero > p { margin: 0 auto 14px; max-width: 420px; }
+.own-hero { text-align: center; padding: 24px 20px; margin-bottom: 14px; background: linear-gradient(160deg, rgba(59,130,246,0.14), transparent 60%), var(--card); }
+.own-hero h3 { margin: 12px 0 6px; font-size: 20px; }
+.own-hero > p { margin: 0 auto 14px; max-width: 420px; }
 .wh-icon { width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; background: rgba(59,130,246,0.16); color: var(--primary); flex-shrink: 0; }
 .wh-list { list-style: none; padding: 0; margin: 0 auto 18px; max-width: 360px; text-align: left; display: grid; gap: 8px; font-size: 14px; }
 .wh-list li { display: flex; gap: 8px; align-items: center; }

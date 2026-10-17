@@ -76,7 +76,7 @@ export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
 
       {!hasOwn ? (
         <>
-          <div className="card wallet-hero">
+          <div className="card own-hero">
             <div className="wh-icon"><Icon.Lock size={28} /></div>
             <h3>Власний гаманець ICP</h3>
             <p className="muted">NFT, які ви створюєте й отримуєте, належатимуть тільки вам — не Marki і не застосунку.</p>
