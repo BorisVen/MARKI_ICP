@@ -107,7 +107,7 @@ export default function PublicProfilePage({ username, onClose, onSignIn }: {
             </div>
 
             {profile.bio && <p className="ph-bio">{profile.bio}</p>}
-            {profile.location && <div className="muted" style={{ fontSize: 13, marginTop: -6, marginBottom: 12 }}>📍 {profile.location}</div>}
+            {profile.location && <div className="muted" style={{ fontSize: 13, marginTop: 4, marginBottom: 12 }}>📍 {profile.location}</div>}
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
               {!own && (
