@@ -2609,3 +2609,25 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
   .topbar .logout, .topbar .who > .icon-btn { display: none; }
 }
 .ii-back { padding: 18px; font-size: 17px; }
+
+/* ── Sign-in / sign-up ──────────────────────────────────────────────────── */
+.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.login-brand img { width: 52px; height: 52px; border-radius: 14px; background: #fff; }
+.login-brand strong { display: block; font-size: 20px; letter-spacing: .02em; }
+.login-brand span { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1f2937; border-color: #fff; font-weight: 600; padding: 13px; }
+.google-btn:hover:not(:disabled) { background: #f3f4f6; }
+.pw-field { position: relative; }
+.pw-field input { width: 100%; padding-right: 48px; box-sizing: border-box; }
+.pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; font-size: 18px; padding: 6px; cursor: pointer; }
+.link-btn { margin-top: 8px; border: none; background: none; color: var(--muted); }
+.login-terms { margin: 14px 0 0; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+.divider { text-transform: uppercase; }
+/* Drawer header clears the status bar on phones. */
+.drawer { padding-top: calc(14px + var(--safe-area-inset-top, 0px)); }
+.reg-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin-bottom: 14px; display: block; }
+.reg-letter { display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 30px; font-weight: 700; }
+.nick-field { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); padding-left: 12px; }
+.nick-field span { color: var(--muted); font-weight: 600; }
+.nick-field input { flex: 1; border: 0 !important; background: transparent !important; outline: none; }
+.nick-bad { color: #f87171; }

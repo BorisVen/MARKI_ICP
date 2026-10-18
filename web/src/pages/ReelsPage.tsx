@@ -6,6 +6,7 @@ import { Icon } from '../icons';
 import type { PageId } from '../Shell';
 import { publicUrl } from '../publicUrl';
 import { openProfile, PeopleRow } from '../People';
+import { askPushPermission } from '../native/push';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 
 /** Opens a public page of the app (passport, profile) the way a QR link would. */
@@ -149,6 +150,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
 
   const like = async () => {
     if (!uid) return;
+    askPushPermission().catch(() => {});
     // Optimistic: the heart reacts at once, the server confirms.
     onChange({ ...post, likes: (post.likes ?? 0) + (liked ? -1 : 1), likedBy: liked ? post.likedBy?.filter(x => x !== uid) : [...(post.likedBy ?? []), uid] });
     try { onChange(await apiLikePost(post.id)); } catch { onChange(post); }
@@ -233,6 +235,7 @@ export function CommentsSheet({ post, onClose, onChange }: { post: Post; onClose
     try {
       onChange(await apiAddComment(post.id, text.trim()));
       setText('');
+      askPushPermission().catch(() => {});
     } catch (e: any) {
       setError(e?.message ?? 'Не вдалося надіслати');
     } finally {

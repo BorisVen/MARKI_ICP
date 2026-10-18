@@ -9,6 +9,7 @@ import {
 import { Icon } from '../icons';
 import EmptyState from '../EmptyState';
 import { openNotification } from '../openNotification';
+import { askPushPermission } from '../native/push';
 import { fmtAgo, fmtDateTime, plural } from '../format';
 
 /** Backend texts are English; show Ukrainian ones for the known types. */
@@ -30,6 +31,8 @@ const TYPE_TEXT: Record<string, { icon: string; title?: string }> = {
 const cleanTitle = (title: string, icon?: string) => (icon && title.startsWith(icon) ? title.slice(icon.length).trim() : title);
 
 export default function NotificationsPage() {
+  // Opening the inbox is the natural moment to offer phone notifications.
+  useEffect(() => { askPushPermission().catch(() => {}); }, []);
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

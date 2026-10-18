@@ -10,6 +10,7 @@ import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal }
 import { needsConfirm, useMyOrders } from './OrdersPage';
 import { publicUrl } from '../publicUrl';
 import { openProfile, PeopleRow } from '../People';
+import { askPushPermission } from '../native/push';
 import { CommentsSheet, readHistory, remember } from './ReelsPage';
 
 const DONE = ['delivered', 'verified', 'completed', 'cancelled'];
@@ -166,6 +167,7 @@ function MarketCard({ post, uid, onChange, onFeed, onBuy, onComments }: {
 
   const like = async () => {
     if (!uid) return;
+    askPushPermission().catch(() => {});
     onChange({ ...post, likes: (post.likes ?? 0) + (liked ? -1 : 1), likedBy: liked ? post.likedBy?.filter(x => x !== uid) : [...(post.likedBy ?? []), uid] });
     try { onChange(await apiLikePost(post.id)); } catch { onChange(post); }
   };
