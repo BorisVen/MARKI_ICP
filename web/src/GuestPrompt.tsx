@@ -26,7 +26,7 @@ export default function GuestPrompt({ text, onSignIn }: { text: string; onSignIn
 
   return (
     <div className="guest-prompt" role="dialog" aria-label="Вхід у Marki">
-      <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={32} height={32} />
+      <img src={`${import.meta.env.BASE_URL}marki-logo.png`} alt="" width={32} height={32} style={{ borderRadius: 8, background: "#fff" }} />
       <div className="gp-text">
         <strong>Ти в Marki?</strong>
         <span>{text}</span>

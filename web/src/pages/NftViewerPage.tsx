@@ -6,6 +6,7 @@ import { fmtDateTime } from '../format';
 import Logo from '../Logo';
 import { passportNo } from './MyNftsPage';
 import { OwnerChain, ownershipChain } from '../ownership';
+import { Icon } from '../icons';
 import RequestGiftBox from '../gifts/RequestGiftBox';
 
 type Source =
@@ -96,7 +97,7 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
   return (
     <div className="viewer-wrap">
       <header className="viewer-topbar">
-        <button className="btn" onClick={onClose}>← {onSignIn ? 'Marki' : 'До застосунку'}</button>
+        <button className="back-pill" onClick={onClose}><Icon.Back size={18} /> {onSignIn ? 'Marki' : 'Назад'}</button>
         <Logo size={24} />
         {onSignIn ? <button className="btn" onClick={() => onSignIn('login')}>Увійти</button> : <span />}
       </header>
@@ -111,7 +112,7 @@ export default function NftViewerPage({ source, onClose, onSignIn }: Props) {
             <p>{err}</p>
             {onSignIn
               ? <button className="btn btn-primary" onClick={() => onSignIn('signup')}>Увійти або зареєструватися</button>
-              : <button className="btn" onClick={onClose}>До застосунку</button>}
+              : <button className="btn" onClick={onClose}>Повернутися</button>}
           </div>
         )}
 

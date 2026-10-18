@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClaimGift, apiGiftPreview, apiMyGifts, type GiftPreview } from '../api';
 import { useAuth } from '../auth';
+import { Icon } from '../icons';
 import Logo from '../Logo';
 
 /** Claim page opened from a gift link or QR. Guests see the gift and sign in to take it. */
@@ -58,7 +59,7 @@ export default function GiftClaimPage({ code, onClose, onSignIn, onOpenPassports
   return (
     <div className="public-page gift-page">
       <header className="viewer-topbar">
-        <button className="btn" onClick={onClose}>← {user ? 'До застосунку' : 'Marki'}</button>
+        <button className="back-pill" onClick={onClose}><Icon.Back size={18} /> {user ? 'Назад' : 'Marki'}</button>
         <Logo size={24} />
         {onSignIn ? <button className="btn" onClick={() => onSignIn('login')}>Увійти</button> : <span />}
       </header>

@@ -15,6 +15,7 @@ import GuestPrompt from '../GuestPrompt';
 import Logo from '../Logo';
 import ShareProfile from '../ShareProfile';
 import { GridSkeleton } from '../Skeleton';
+import { Icon } from '../icons';
 import { fmtCount, groupNfts } from './ProfilePage';
 
 /** Someone's profile opened from a QR code or link. Works for guests. */
@@ -76,7 +77,7 @@ export default function PublicProfilePage({ username, onClose, onSignIn }: {
   return (
     <div className="public-page">
       <header className="viewer-topbar">
-        <button className="btn" onClick={onClose}>← {user ? 'До застосунку' : 'Marki'}</button>
+        <button className="back-pill" onClick={onClose}><Icon.Back size={18} /> {user ? 'Назад' : 'Marki'}</button>
         <Logo size={24} />
         {onSignIn ? <button className="btn" onClick={() => onSignIn('login')}>Увійти</button> : <span />}
       </header>

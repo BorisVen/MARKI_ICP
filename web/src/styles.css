@@ -2634,3 +2634,8 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .mk-more { display: grid; place-items: center; padding: 18px 0 30px; }
 .reel-more { height: 1px; }
 .btn-test { margin-top: 8px; border-style: dashed; border-color: #a78bfa; color: #c4b5fd; }
+
+/* One-line way back from public pages (profile, passport, gift) */
+.back-pill { display: inline-flex; align-items: center; gap: 4px; padding: 8px 14px 8px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: inherit; font: 600 14px inherit; white-space: nowrap; cursor: pointer; }
+.back-pill:active { transform: scale(.97); }
+.logo-mark { background: #fff; }

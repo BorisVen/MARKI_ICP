@@ -55,7 +55,7 @@ export default function ShareProfile({ name, username, avatar, onClose }: {
         <div className="share-name">{name}</div>
         <div className="share-user">@{username}</div>
         {qr ? <img className="share-qr" src={qr} alt="QR-код профілю" /> : <div className="share-qr sk" />}
-        <div className="share-brand"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={20} height={20} /> Marki</div>
+        <div className="share-brand"><img src={`${import.meta.env.BASE_URL}marki-logo.png`} alt="" width={20} height={20} style={{ borderRadius: 5, background: "#fff" }} /> Marki</div>
       </div>
 
       <div className="share-actions">
