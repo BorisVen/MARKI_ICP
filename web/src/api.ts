@@ -812,15 +812,6 @@ export const apiMarkiWalletSeed = () => get<{ seed: string }>('/api/me/icp-walle
 export const apiRegisterPushToken = (token: string) => put<void>('/api/me/push-token', { token });
 export const apiBillingOrders = () => get<BillingOrder[]>('/api/billing/orders');
 
-// ── Wallet sign-in relay (app ⇄ website, Internet Identity) ─────────────────
-
-export const apiIiRelayPut = (key: string, chain: unknown) => post<void>(`/api/public/ii-relay/${enc(key)}`, chain);
-/** The app's sign-in, or null while the website has not finished it. */
-export const apiIiRelayTake = (key: string) =>
-  get<{ chain: string }>(`/api/public/ii-relay/${enc(key)}`).then(r => r.chain).catch((e: any) => {
-    if (e?.status === 404) return null;
-    throw e;
-  });
 export type BillingPrice = { amount: string; currency: string; testMode: boolean };
 export const apiBillingPrice = () => get<BillingPrice>('/api/public/billing/price');
 /** "$0.01", "1 грн". */

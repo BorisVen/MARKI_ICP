@@ -2602,3 +2602,10 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .rc-who { display: contents; cursor: pointer; }
 .rc-avatar-btn, .rc-name-btn { border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .mk-author-btn { border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+
+/* Phones: «Вийти» lives in the profile menu and the inbox in the bottom bar —
+   no accidental sign-out from the header, no second bell. */
+@media (max-width: 860px) {
+  .topbar .logout, .topbar .who > .icon-btn { display: none; }
+}
+.ii-back { padding: 18px; font-size: 17px; }

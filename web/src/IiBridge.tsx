@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { apiIiRelayPut } from './api';
 import { iiDelegateTo } from './icp/ii';
 import Logo from './Logo';
 
@@ -18,9 +17,9 @@ export default function IiBridge({ sessionKey }: { sessionKey: string }) {
     setState('busy');
     try {
       const chain = await iiDelegateTo(sessionKey);
-      // Through Marki's server first: the app picks it up even if the link below is blocked.
-      await apiIiRelayPut(sessionKey, chain).catch(() => {});
-      const url = `marki://ii#${encodeURIComponent(JSON.stringify(chain))}`;
+      // Straight to the Marki app on this phone — never through a server: a link
+      // with someone else's key would otherwise hand them this wallet.
+      const url = `intent://ii?d=${encodeURIComponent(JSON.stringify(chain))}#Intent;scheme=marki;package=com.identity.app;end`;
       setBack(url);
       setState('done');
       window.location.href = url;
@@ -38,17 +37,17 @@ export default function IiBridge({ sessionKey }: { sessionKey: string }) {
         <p className="muted">Посилання пошкоджене. Відкрийте вхід із застосунку Marki ще раз.</p>
       ) : state === 'done' ? (
         <>
-          <p>Готово ✅ Тепер поверніться в застосунок Marki — або просто закрийте цю вкладку.</p>
-          <a className="btn btn-primary btn-block" href={back}>Повернутися в Marki</a>
+          <p>Готово ✅ Натисніть кнопку — і ви знову в застосунку.</p>
+          <a className="btn btn-primary btn-block ii-back" href={back}>Повернутися в Marki</a>
         </>
       ) : (
         <>
           <p className="muted">Для застосунку Marki на цьому телефоні. Підтвердіть відбитком або Face ID — ключ залишиться тільки у вас.</p>
+          <p className="muted" style={{ fontSize: 12 }}>Відкрили це посилання не з застосунку Marki? Не входьте — закрийте сторінку.</p>
           <button className="btn btn-primary btn-block" onClick={signIn} disabled={state === 'busy'}>
             {state === 'busy' ? 'Підтвердіть у вікні Internet Identity…' : 'Увійти через Internet Identity'}
           </button>
           {state === 'error' && <div className="error-banner" style={{ marginTop: 12 }}>{error}</div>}
-          <p className="muted" style={{ fontSize: 12, marginTop: 16 }}>Не відкривали вхід у Marki? Просто закрийте цю сторінку.</p>
         </>
       )}
     </div>

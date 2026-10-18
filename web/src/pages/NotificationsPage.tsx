@@ -19,7 +19,15 @@ const TYPE_TEXT: Record<string, { icon: string; title?: string }> = {
   sale:        { icon: '💰', title: 'Продаж' },
   delivery:    { icon: '🚚', title: 'Доставка' },
   cod_order:   { icon: '🛒', title: 'Нове замовлення' },
+  like:        { icon: '❤️' },
+  comment:     { icon: '💬' },
+  gift:        { icon: '🎁' },
+  wallet:      { icon: '👛' },
+  system:      { icon: '🔔' },
 };
+
+/** Server titles may start with the same emoji as the icon: show it once. */
+const cleanTitle = (title: string, icon?: string) => (icon && title.startsWith(icon) ? title.slice(icon.length).trim() : title);
 
 export default function NotificationsPage() {
   const [items, setItems] = useState<Notification[]>([]);
@@ -91,7 +99,7 @@ export default function NotificationsPage() {
                 <span style={{ fontSize: 22, lineHeight: 1 }}>{t?.icon ?? '📌'}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 14, margin: 0 }}>{n.title || t?.title}</h3>
+                    <h3 style={{ fontSize: 14, margin: 0 }}>{n.title ? cleanTitle(n.title, t?.icon) : t?.title}</h3>
                     {!n.read && <span className="unread-dot" style={{ marginTop: 0 }} title="Непрочитане" />}
                   </div>
                   {(n.text ?? n.body) && <p className="sub" style={{ fontSize: 13, margin: '4px 0' }}>{n.text ?? n.body}</p>}
