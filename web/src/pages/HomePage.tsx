@@ -194,6 +194,7 @@ function MarketCard({ post, uid, onChange, onFeed, onBuy, onComments }: {
           <img src={images[0]} alt={postTitle(post)} loading="lazy" />
         )}
         {images.length > 1 && <span className="mk-pill left">{images.length} NFT</span>}
+        {post.discover && (post.count ?? 1) > 1 && <span className="mk-pill left">{post.count} шт</span>}
         {forSale && <span className="mk-pill">{fmtPrice(post.price, post.currency)}</span>}
         <span className="mk-play"><Icon.Play size={14} /></span>
       </button>
@@ -216,8 +217,9 @@ function MarketCard({ post, uid, onChange, onFeed, onBuy, onComments }: {
         </div>
 
         <div className="mk-actions">
-          <button className={liked ? 'on' : ''} onClick={like}><Icon.Heart size={16} /> {post.likes ?? 0}</button>
-          <button onClick={onComments}><Icon.Comment size={16} /> {post.comments?.length ?? 0}</button>
+          {!post.discover && <button className={liked ? 'on' : ''} onClick={like}><Icon.Heart size={16} /> {post.likes ?? 0}</button>}
+          {!post.discover && <button onClick={onComments}><Icon.Comment size={16} /> {post.comments?.length ?? 0}</button>}
+          {post.discover && <span className="mk-onchain">⛓️ у блокчейні</span>}
           <button onClick={share} aria-label="Поділитися"><Icon.Share size={16} /></button>
           <span>{fmtAgo(post.createdAt)}</span>
         </div>

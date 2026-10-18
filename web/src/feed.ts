@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiGetPosts, type Post } from './api';
+import { apiDiscover, apiGetPosts, type Post } from './api';
 import { postImage } from './pages/market';
 
 /**
@@ -16,9 +16,10 @@ export function cachedPosts(): Post[] | null {
 
 export function loadPosts(force = false): Promise<Post[]> {
   if (!force && cache && Date.now() - cache.at < FRESH_MS) return Promise.resolve(cache.posts);
-  inflight ??= apiGetPosts()
-    .then(all => {
-      const posts = all.filter(p => postImage(p));
+  // Posts plus everyone's minted collections, so the market is never just a couple of cards.
+  inflight ??= Promise.all([apiGetPosts(), apiDiscover().catch(() => [] as Post[])])
+    .then(([own, found]) => {
+      const posts = [...own, ...found].filter(p => postImage(p));
       cache = { at: Date.now(), posts };
       return posts;
     })
@@ -45,6 +46,7 @@ export function rank(posts: Post[], uid: string | undefined, viewed: string[]): 
       + 2 * Math.log1p(p.likes ?? 0)
       + 1.5 * Math.log1p(p.comments?.length ?? 0)
       + (p.forSale && p.price != null ? 1.5 : 0)
+      + (p.discover ? Math.min(2, Math.log1p(p.count ?? 1) / 2) : 0)
       - (seen.has(p.id) ? 3 : 0)
       - (p.userId === uid ? 4 : 0);
   };

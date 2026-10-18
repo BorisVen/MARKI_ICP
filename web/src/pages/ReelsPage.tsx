@@ -166,6 +166,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
   };
   // Double tap on the picture likes it, like on TikTok / Instagram.
   const tap = () => {
+    if (post.discover) return;
     const now = Date.now();
     if (now - lastTap.current < 300 && !liked) { like(); setPop(true); setTimeout(() => setPop(false), 600); }
     lastTap.current = now;
@@ -198,15 +199,18 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
           {postAvatar(post) ? <img src={postAvatar(post)} alt="" /> : <span>{postAuthor(post).slice(0, 1).toUpperCase()}</span>}
           {!mine && !following && <button className="reel-follow" onClick={e => { e.stopPropagation(); follow(); }} aria-label="Підписатися">+</button>}
         </div>
-        <button className={`reel-act ${liked ? 'on' : ''}`} onClick={like} aria-label="Подобається">
-          <Icon.Heart size={30} /><span>{short(post.likes ?? 0)}</span>
-        </button>
-        <button className="reel-act" onClick={onComments} aria-label="Коментарі">
-          <Icon.Comment size={30} /><span>{short(post.comments?.length ?? 0)}</span>
-        </button>
-        <button className="reel-act" onClick={repost} aria-label="Репост">
-          <Icon.Repost size={28} /><span>{short(post.reposts ?? 0)}</span>
-        </button>
+        {/* A collection from someone's profile is not a post: no likes or comments on it. */}
+        {!post.discover && <>
+          <button className={`reel-act ${liked ? 'on' : ''}`} onClick={like} aria-label="Подобається">
+            <Icon.Heart size={30} /><span>{short(post.likes ?? 0)}</span>
+          </button>
+          <button className="reel-act" onClick={onComments} aria-label="Коментарі">
+            <Icon.Comment size={30} /><span>{short(post.comments?.length ?? 0)}</span>
+          </button>
+          <button className="reel-act" onClick={repost} aria-label="Репост">
+            <Icon.Repost size={28} /><span>{short(post.reposts ?? 0)}</span>
+          </button>
+        </>}
         <button className="reel-act" onClick={share} aria-label="Поділитися">
           <Icon.Share size={28} /><span>Надіслати</span>
         </button>
@@ -214,7 +218,7 @@ function Reel({ post, uid, onChange, onBuy, onComments }: {
 
       <div className="reel-info">
         <div className="reel-author"><button className="rc-name-btn" onClick={() => openProfile({ uid: post.userId })}>@{postAuthor(post)}</button> · <span>{fmtAgo(post.createdAt)}</span></div>
-        <div className="reel-title">{postTitle(post)}</div>
+        <div className="reel-title">{postTitle(post)}{post.discover && (post.count ?? 1) > 1 ? ` · ${post.count} шт` : ""}</div>
         {(post.description || post.text) && <div className="reel-desc">{post.description || post.text}</div>}
         <div className="reel-buttons">
           {forSale && <button className="btn btn-primary" onClick={onBuy}>Купити · {fmtPrice(post.price, post.currency)}</button>}

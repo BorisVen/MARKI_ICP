@@ -170,6 +170,10 @@ export type NFT = {
 export type Post = {
   id: string;
   userId: string;
+  /** Not a post: a collection of minted NFTs from someone's profile (GET /api/discover). */
+  discover?: boolean;
+  /** Discover: how many NFTs are in the collection. */
+  count?: number;
   /** What the API sends: the author's name and avatar. */
   userName?: string;
   userAvatar?: string;
@@ -410,6 +414,7 @@ export const apiRegenerateAllQr = async () => {
 // ── Posts (marketplace + feed) ───────────────────────────────────────────────
 
 export const apiGetPosts   = () => get<Post[]>('/api/posts');
+export const apiDiscover   = () => get<Post[]>('/api/discover');
 export const apiCreatePost = (d: Partial<Post>) => post<Post>('/api/posts', d);
 export const apiDeletePost = (id: string) => del<void>(`/api/posts/${id}`);
 export const apiLikePost   = (id: string) => post<Post>(`/api/posts/${id}/like`);
