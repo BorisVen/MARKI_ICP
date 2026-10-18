@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiAddComment, apiFollow, apiGetPosts, apiLikePost, apiPublicProfile, apiRepostPost, type Post, type PublicProfile } from '../api';
+import { apiAddComment, apiFollow, apiLikePost, apiPublicProfile, apiRepostPost, type Post, type PublicProfile } from '../api';
 import { useAuth } from '../auth';
 import { fmtAgo, fmtPrice, plural } from '../format';
 import { Icon } from '../icons';
@@ -7,6 +7,7 @@ import type { PageId } from '../Shell';
 import { publicUrl } from '../publicUrl';
 import { openProfile, PeopleRow } from '../People';
 import { askPushPermission } from '../native/push';
+import { cachedPosts, loadPosts, rank, rememberPost, useProgressive } from '../feed';
 import { postAuthor, postAvatar, postImage, postNftId, postTitle, ProductModal } from './market';
 
 /** Opens a public page of the app (passport, profile) the way a QR link would. */
@@ -41,7 +42,7 @@ export default function ReelsPage({ onJumpTo, startId, startPanel, onBack }: {
   onBack?: () => void;
 }) {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<Post[] | null>(null);
+  const [posts, setPosts] = useState<Post[] | null>(() => { const c = cachedPosts(); return c ? rank(c, user?.uid, readHistory()) : null; });
   const [error, setError] = useState<string | null>(null);
   const [buying, setBuying] = useState<Post | null>(null);
   const [comments, setComments] = useState<Post | null>(null);
@@ -75,23 +76,30 @@ export default function ReelsPage({ onJumpTo, startId, startPanel, onBack }: {
 
   const jumpTo = (id: string) => {
     setPanel(null);
-    feed.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+    // The picked post may not be drawn yet: draw up to it, then scroll there.
+    showMore((posts?.findIndex(p => p.id === id) ?? 0) + 3);
+    requestAnimationFrame(() => feed.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'instant' as ScrollBehavior }));
   };
 
+  // Same order as «Рекомендації» in the marketplace; loaded once for both.
+  const order = useCallback((list: Post[]) => rank(list, user?.uid, readHistory()), [user?.uid]);
   const load = useCallback(async () => {
     setError(null);
     try {
-      const all = await apiGetPosts();
-      setPosts(all.filter(p => postImage(p)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+      const fresh = await loadPosts();
+      // Keep the order already on screen (re-ranking under the finger would jump).
+      setPosts(cur => (cur ? cur.map(p => fresh.find(x => x.id === p.id) ?? p) : order(fresh)));
     } catch (e: any) {
       setError(e?.message ?? 'Не вдалося завантажити стрічку');
-      setPosts([]);
+      setPosts(p => p ?? []);
     }
-  }, []);
+  }, [order]);
 
   useEffect(() => { load(); }, [load]);
 
-  const update = (p: Post) => setPosts(list => list?.map(x => (x.id === p.id ? p : x)) ?? null);
+  const update = (p: Post) => { rememberPost(p); setPosts(list => list?.map(x => (x.id === p.id ? p : x)) ?? null); };
+  const startIndex = startId && posts ? posts.findIndex(p => p.id === startId) : -1;
+  const { count, sentinel, showMore } = useProgressive(posts?.length ?? 0, { atLeast: startIndex + 3, root: () => feed.current });
 
   if (!posts) return <div className="reels"><div className="reel reel-loading"><div className="spinner">Завантажуємо стрічку…</div></div></div>;
   if (posts.length === 0) {
@@ -119,9 +127,10 @@ export default function ReelsPage({ onJumpTo, startId, startPanel, onBack }: {
           <button className="reels-icon" onClick={() => setPanel('search')} aria-label="Пошук"><Icon.Search size={24} /></button>
         </div>
       <div className="reels" ref={feed}>
-        {posts.map(p => (
+        {posts.slice(0, count).map(p => (
           <Reel key={p.id} post={p} uid={user?.uid} onChange={update} onBuy={() => setBuying(p)} onComments={() => setComments(p)} />
         ))}
+        {posts.length > count && <div ref={sentinel} className="reel-more" />}
       </div>
       </div>
       {panel && <FindSheet mode={panel} posts={posts} onPick={jumpTo} onClose={() => setPanel(null)} />}

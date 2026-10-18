@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { apiBillingPrice, fmtBillingPrice, type BillingPrice } from '../api';
+import { apiBillingMe, apiBillingPrice, apiTestPurchase, fmtBillingPrice, type BillingPrice } from '../api';
 import { paymentsIdl, type PaymentsService, type PlanQuote } from '../icp/idl';
 import { friendlyIcpError } from '../icp/errors';
 import { CardOrders, payByCard } from '../icp/CardPay';
@@ -36,7 +36,27 @@ export default function PricingPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [price, setPrice] = useState<BillingPrice | null>(null);
 
+  const [tester, setTester] = useState(false);
   useEffect(() => { apiBillingPrice().then(setPrice).catch(() => {}); }, []);
+  useEffect(() => { apiBillingMe().then(r => setTester(r.tester)).catch(() => {}); }, []);
+
+  // Testers (Alan, Boris…): the plan as if paid, while real payments are not set up.
+  const testBuy = async (q: PlanQuote) => {
+    if (!wallet) return;
+    setError(null);
+    setSuccess(null);
+    setBusy(`Тестова покупка «${q.plan.name}»…`);
+    try {
+      await apiTestPurchase({ planId: q.plan.id, principal: wallet.principal });
+      await plan.refresh();
+      setSuccess(`Готово 🎉 Тариф «${q.plan.name}» активовано (тестова покупка, без оплати).`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      setError(errText(e));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const loadPlans = useCallback(async () => {
     const payments = await anonymousActor<PaymentsService>(PAYMENTS_CANISTER_ID, paymentsIdl);
@@ -135,6 +155,11 @@ export default function PricingPage() {
               >
                 {!wallet ? 'Спершу гаманець' : `💳 ${current ? 'Продовжити' : 'Оплатити'}${price ? ` · ${fmtBillingPrice(price)}${price.testMode ? ' (тест)' : ''}` : ''}`}
               </button>
+              {tester && wallet && (
+                <button className="btn btn-block btn-test" onClick={() => testBuy(q)} disabled={!!busy}>
+                  🧪 Купити тестово · без оплати
+                </button>
+              )}
             </div>
           );
         })}

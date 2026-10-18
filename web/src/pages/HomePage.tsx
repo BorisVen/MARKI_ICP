@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { apiGetPosts, apiLikePost, type Post } from '../api';
+import { apiLikePost, type Post } from '../api';
 import { useAuth } from '../auth';
 import EmptyState from '../EmptyState';
 import { fmtAgo, fmtPrice, plural } from '../format';
@@ -11,6 +11,7 @@ import { needsConfirm, useMyOrders } from './OrdersPage';
 import { publicUrl } from '../publicUrl';
 import { openProfile, PeopleRow } from '../People';
 import { askPushPermission } from '../native/push';
+import { cachedPosts, loadPosts, rank, rememberPost, useProgressive } from '../feed';
 import { CommentsSheet, readHistory, remember } from './ReelsPage';
 
 const DONE = ['delivered', 'verified', 'completed', 'cancelled'];
@@ -35,7 +36,8 @@ const openRoute = (search: string) => {
 export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageId) => void; onOpenFeed: (startId?: string) => void }) {
   const uid = useAuth().user?.uid;
   const my = useMyOrders();
-  const [posts, setPosts] = useState<Post[] | null>(null);
+  // Shared with the feed: shows at once when coming back, refreshes quietly.
+  const [posts, setPosts] = useState<Post[] | null>(() => cachedPosts());
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -46,11 +48,10 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
   const load = async () => {
     setError(null);
     try {
-      const all = await apiGetPosts();
-      setPosts(all.filter(p => postImage(p)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+      setPosts(await loadPosts());
     } catch (e: any) {
       setError(e?.message ?? 'Не вдалося завантажити маркет');
-      setPosts([]);
+      setPosts(p => p ?? []);
     }
   };
   useEffect(() => { load(); }, []);
@@ -67,7 +68,7 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
     return () => io.disconnect();
   }, [posts, filter, query]);
 
-  const update = (p: Post) => setPosts(l => l?.map(x => (x.id === p.id ? p : x)) ?? null);
+  const update = (p: Post) => { rememberPost(p); setPosts(l => l?.map(x => (x.id === p.id ? p : x)) ?? null); };
 
   // Only the single most important thing about the user's orders.
   const toConfirm = my.deliveries.filter(d => needsConfirm(d, uid));
@@ -84,9 +85,11 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
     const viewed = filter === 'viewed' ? readHistory() : [];
     const base = filter === 'viewed'
       ? viewed.map(id => posts.find(p => p.id === id)).filter((p): p is Post => !!p)
-      : posts.filter(p => filter === 'all' || (filter === 'sale' ? p.forSale && p.price != null : p.userId === uid));
+      : filter === 'all' ? rank(posts, uid, readHistory())
+      : [...posts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).filter(p => (filter === 'sale' ? p.forSale && p.price != null : p.userId === uid));
     return base.filter(p => !q || [postTitle(p), p.text, p.description, postAuthor(p), ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q)));
   }, [posts, query, filter, uid]);
+  const { count, sentinel } = useProgressive(shown.length);
 
   return (
     <div className="mk">
@@ -130,7 +133,7 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
         />
       ) : (
         <div className="mk-list" ref={list}>
-          {shown.map(p => (
+          {shown.slice(0, count).map(p => (
             <MarketCard
               key={p.id}
               post={p}
@@ -143,6 +146,9 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
           ))}
         </div>
       )}
+
+      {/* More cards load as you scroll (3 at a time). */}
+      {shown.length > count && <div ref={sentinel} className="mk-more"><span className="mini-spin" /></div>}
 
       {buying && <ProductModal post={buying} onClose={() => setBuying(null)} onOrdered={() => { setBuying(null); onJumpTo('orders'); }} />}
       {comments && <CommentsSheet post={comments} onClose={() => setComments(null)} onChange={p => { update(p); setComments(p); }} />}

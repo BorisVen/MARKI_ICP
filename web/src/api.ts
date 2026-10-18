@@ -817,3 +817,7 @@ export const apiBillingPrice = () => get<BillingPrice>('/api/public/billing/pric
 /** "$0.01", "1 грн". */
 export const fmtBillingPrice = (p: BillingPrice) =>
   p.currency === 'USD' ? `$${p.amount}` : p.currency === 'UAH' ? `${p.amount} грн` : `${p.amount} ${p.currency}`;
+
+/** Accounts that may take a plan without paying while real payments are not set up. */
+export const apiBillingMe = () => get<{ tester: boolean }>('/api/billing/me');
+export const apiTestPurchase = (d: { planId: string; principal: string }) => post<BillingOrder>('/api/billing/test-purchase', d);

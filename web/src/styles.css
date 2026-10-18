@@ -2631,3 +2631,6 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .nick-field span { color: var(--muted); font-weight: 600; }
 .nick-field input { flex: 1; border: 0 !important; background: transparent !important; outline: none; }
 .nick-bad { color: #f87171; }
+.mk-more { display: grid; place-items: center; padding: 18px 0 30px; }
+.reel-more { height: 1px; }
+.btn-test { margin-top: 8px; border-style: dashed; border-color: #a78bfa; color: #c4b5fd; }
