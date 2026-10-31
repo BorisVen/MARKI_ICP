@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useAuth, isBanned } from './auth';
 import Login from './Login';
 import Register from './Register';
@@ -26,9 +26,11 @@ import GiftsPage from './gifts/GiftsPage';
 import GiftClaimPage from './gifts/GiftClaimPage';
 import { autoConnectWallet } from './icp/useWallet';
 import { registerPush } from './native/push';
-import { listenAppLinks } from './native/links';
+import { listenAppLinks, listenBackButton } from './native/links';
+import { showToast } from './TopToast';
 import OpenInApp from './OpenInApp';
 import { openNotification, type NotificationLink } from './openNotification';
+import { useCanCreate } from './access';
 import { initTheme } from './theme';
 
 const PAGE_TITLES: Record<PageId, string> = {
@@ -119,6 +121,34 @@ function MarkiApp() {
     const onPop = () => setRoute(readPublicRoute());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Without the right to create, these pages lead home (a push or an old link may point there).
+  const canCreate = useCanCreate();
+  const closedPage = !canCreate && (page === 'create' || page === 'plans');
+  useEffect(() => { if (closedPage && !new URLSearchParams(window.location.search).has('paid')) setPage('home'); }, [closedPage]);
+
+  // Android back: closes what is open, then steps back to the market, then asks once before leaving.
+  const backState = useRef({ page, route: null as PublicRoute | null, lastAt: 0 });
+  backState.current.page = page;
+  backState.current.route = route;
+  useEffect(() => {
+    listenBackButton(() => {
+      const sheet = document.querySelector<HTMLElement>('.sheet-backdrop, .drawer-backdrop');
+      if (sheet) { sheet.click(); return true; }
+      const s = backState.current;
+      if (s.route) {
+        setRoute(null);
+        window.history.replaceState({}, '', window.location.pathname);
+        return true;
+      }
+      if (s.page !== 'home') { setPage('home'); return true; }
+      const now = Date.now();
+      if (now - s.lastAt < 2000) return false;
+      s.lastAt = now;
+      showToast({ id: `exit-${now}`, title: 'Натисніть ще раз, щоб вийти' });
+      return true;
+    });
   }, []);
 
   // Links into the app: a QR or link from the website, the way back from a card payment.

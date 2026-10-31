@@ -10,6 +10,7 @@ import { useSubscription } from '../icp/useSubscription';
 import { useWallet } from '../icp/useWallet';
 import WalletConnect from '../icp/WalletConnect';
 import { askPushPermission } from '../native/push';
+import { invalidatePosts } from '../feed';
 import type { PageId } from '../Shell';
 
 /** Resize to at most 1080 px and re-encode as JPEG: smaller upload, fewer cycles. */
@@ -152,6 +153,7 @@ export default function CreateNftPage({ onJumpTo }: { onJumpTo: (p: PageId) => v
         });
       }
 
+      invalidatePosts();
       if (mint) { setDone(mint); plan.refresh(); } else setDoneOffChain(true);
       // A first NFT: likes and gifts will follow — offer phone notifications.
       askPushPermission().catch(() => {});

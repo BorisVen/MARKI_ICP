@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { apiLikePost, type Post } from '../api';
 import { useAuth } from '../auth';
 import EmptyState from '../EmptyState';
@@ -33,14 +33,28 @@ const openRoute = (search: string) => {
  * price and «Купити». «Стрічка» — the same items as a TikTok-style feed;
  * tapping a picture opens the feed on that item.
  */
+/** Recommendations keep their order until a refresh: viewing a card must not reshuffle the list. */
+function keepOrder(ranked: Post[]): Post[] {
+  const at = new Map(place.order.map((id, i) => [id, i]));
+  const known = ranked.filter(p => at.has(p.id)).sort((a, b) => at.get(a.id)! - at.get(b.id)!);
+  const result = [...ranked.filter(p => !at.has(p.id)), ...known];
+  place.order = result.map(p => p.id);
+  return result;
+}
+
+/** Where the market was left: coming back from the feed or a passport lands there. */
+const place = { y: 0, count: 0, query: '', filter: 'all' as Filter, order: [] as string[] };
+
 export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageId) => void; onOpenFeed: (startId?: string) => void }) {
   const uid = useAuth().user?.uid;
   const my = useMyOrders();
   // Shared with the feed: shows at once when coming back, refreshes quietly.
   const [posts, setPosts] = useState<Post[] | null>(() => cachedPosts());
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+  const [query, setQuery] = useState(place.query);
+  const [filter, setFilter] = useState<Filter>(place.filter);
+  const [pull, setPull] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [buying, setBuying] = useState<Post | null>(null);
   const [comments, setComments] = useState<Post | null>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -85,14 +99,62 @@ export default function HomePage({ onJumpTo, onOpenFeed }: { onJumpTo: (p: PageI
     const viewed = filter === 'viewed' ? readHistory() : [];
     const base = filter === 'viewed'
       ? viewed.map(id => posts.find(p => p.id === id)).filter((p): p is Post => !!p)
-      : filter === 'all' ? rank(posts, uid, readHistory())
+      : filter === 'all' ? keepOrder(rank(posts, uid, readHistory()))
       : [...posts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).filter(p => (filter === 'sale' ? p.forSale && p.price != null : p.userId === uid));
     return base.filter(p => !q || [postTitle(p), p.text, p.description, postAuthor(p), ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q)));
   }, [posts, query, filter, uid]);
-  const { count, sentinel } = useProgressive(shown.length);
+  const { count, sentinel } = useProgressive(shown.length, { atLeast: place.count });
+
+  // Back in the market: same search, same filter, same spot.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !posts) return;
+    restored.current = true;
+    const y = place.y;
+    if (!y) return;
+    // Cards are still getting their height: keep trying for a moment.
+    let tries = 0;
+    const again = () => {
+      window.scrollTo({ top: y });
+      if (Math.abs(window.scrollY - y) > 2 && ++tries < 30) requestAnimationFrame(again);
+    };
+    requestAnimationFrame(again);
+  }, [posts]);
+  place.count = count;
+  place.query = query;
+  place.filter = filter;
+  // Remembered while scrolling: by the time a page closes the window has already jumped.
+  useLayoutEffect(() => {
+    const on = () => { place.y = window.scrollY; };
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
+
+  // Pull down at the very top to refresh.
+  const pullStart = useRef<number | null>(null);
+  const PULL_AT = 70;
+  const refresh = async () => {
+    setRefreshing(true);
+    try { place.order = []; setPosts(await loadPosts(true)); setError(null); }
+    catch (e: any) { setError(e?.message ?? 'Не вдалося оновити'); }
+    finally { setRefreshing(false); }
+  };
+  const touch = {
+    onTouchStart: (e: React.TouchEvent) => { pullStart.current = window.scrollY <= 0 ? e.touches[0].clientY : null; },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (pullStart.current === null || refreshing) return;
+      setPull(Math.max(0, Math.min(110, (e.touches[0].clientY - pullStart.current) * 0.5)));
+    },
+    onTouchEnd: () => { if (pull >= PULL_AT && !refreshing) refresh(); setPull(0); pullStart.current = null; },
+  };
 
   return (
-    <div className="mk">
+    <div className="mk" {...touch}>
+      {(pull > 0 || refreshing) && (
+        <div className="mk-pull" style={{ height: refreshing ? 44 : pull }}>
+          {refreshing || pull >= PULL_AT ? <span className="mini-spin" /> : <span>↓ Потягніть, щоб оновити</span>}
+        </div>
+      )}
       <div className="mk-head">
         <h1>Маркет<span>place</span></h1>
         <button className="mk-feed-btn" onClick={() => onOpenFeed()} aria-label="Відкрити стрічку">

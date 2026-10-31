@@ -2640,3 +2640,7 @@ html:has(.gc-wrap), body:has(.gc-wrap) { overscroll-behavior: none; }
 .back-pill:active { transform: scale(.97); }
 .logo-mark { background: #fff; }
 .mk-onchain { font-size: 12px; }
+
+.mk-pull { display: grid; place-items: center; overflow: hidden; color: var(--muted); font-size: 13px; transition: height .12s; }
+.offline-bar { position: fixed; z-index: 390; left: 0; right: 0; top: var(--safe-area-inset-top, 0px); padding: 7px 12px; text-align: center; font-size: 13px; font-weight: 600; background: #b45309; color: #fff; }
+.mk-actions span.mk-onchain { margin-left: 0; }

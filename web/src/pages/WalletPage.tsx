@@ -12,6 +12,7 @@ import {
   useWallet,
   type OwnWalletResult,
 } from '../icp/useWallet';
+import { useCanCreate } from '../access';
 import type { PageId } from '../Shell';
 
 const OnChainHandover = lazy(() => import('../icp/OnChainHandover'));
@@ -24,6 +25,7 @@ const short = (p: string) => `${p.slice(0, 5)}…${p.slice(-3)}`;
  */
 export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void }) {
   const { user, reload } = useAuth();
+  const canCreate = useCanCreate();
   const wallet = useWallet();
   const plan = useSubscription();
   const [busy, setBusy] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
       <div className="page-head">
         <div>
           <h2>Гаманець</h2>
-          <p>Де живуть ваші NFT і тариф у блокчейні ICP.</p>
+          <p>{canCreate ? 'Де живуть ваші NFT і тариф у блокчейні ICP.' : 'Де живуть ваші NFT у блокчейні ICP.'}</p>
         </div>
       </div>
 
@@ -68,7 +70,7 @@ export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
           <div style={{ fontSize: 13, marginTop: 4 }}>
             {result.total > 0 ? `NFT перенесено: ${result.moved} з ${result.total}. ` : ''}
             {result.planMoved ? 'Тариф тепер на вашому гаманці. ' : ''}
-            Нові NFT створюватимуться одразу на ньому.
+            {canCreate ? 'Нові NFT створюватимуться одразу на ньому.' : 'Подаровані NFT приходитимуть одразу на нього.'}
           </div>
           {result.warning && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{result.warning}</div>}
         </div>
@@ -79,12 +81,12 @@ export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
           <div className="card own-hero">
             <div className="wh-icon"><Icon.Lock size={28} /></div>
             <h3>Власний гаманець ICP</h3>
-            <p className="muted">NFT, які ви створюєте й отримуєте, належатимуть тільки вам — не Marki і не застосунку.</p>
+            <p className="muted">NFT, які ви {canCreate ? 'створюєте й ' : ''}отримуєте, належатимуть тільки вам — не Marki і не застосунку.</p>
             <ul className="wh-list">
               <li><Icon.Check size={16} /> Вхід відбитком, Face ID або ключем доступу</li>
               <li><Icon.Check size={16} /> Без розширень, паролів і seed-фраз</li>
               <li><Icon.Check size={16} /> Безкоштовно — Internet Identity від творців ICP</li>
-              <li><Icon.Check size={16} /> Тариф і NFT зі сховища Marki перенесемо самі</li>
+              <li><Icon.Check size={16} /> {canCreate ? 'Тариф і NFT' : 'NFT'} зі сховища Marki перенесемо самі</li>
             </ul>
             <button className="btn btn-primary btn-block" onClick={create} disabled={!!busy}>
               <Icon.Wallet /> Створити гаманець
@@ -135,7 +137,7 @@ export default function WalletPage({ onJumpTo }: { onJumpTo: (p: PageId) => void
         </div>
       )}
 
-      {plan.active ? (
+      {!canCreate && !plan.active ? null : plan.active ? (
         <div className="card" style={{ marginBottom: 14 }}>
           <PlanMeter state={plan} />
         </div>

@@ -4,6 +4,7 @@ import { Icon } from './icons';
 import { useAuth } from './auth';
 import { apiGetNotifications } from './api';
 import { openNotification } from './openNotification';
+import { useCanCreate } from './access';
 import Logo from './Logo';
 
 export type PageId =
@@ -107,8 +108,18 @@ export default function Shell({ page, setPage, title, children }: Props) {
     window.scrollTo({ top: 0 });
   };
 
-  const mobileItems = ALL_NAV.filter(n => n.mobile);
-  const moreItems = ALL_NAV.filter(n => !n.mobile);
+  // Creating NFTs and plans for minting are only for accounts allowed to create.
+  const canCreate = useCanCreate();
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const on = () => setOffline(!navigator.onLine);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', on);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', on); };
+  }, []);
+  const allowed = (n: NavItem) => canCreate || (n.id !== 'create' && n.id !== 'plans');
+  const mobileItems = ALL_NAV.filter(n => n.mobile && allowed(n));
+  const moreItems = ALL_NAV.filter(n => !n.mobile && allowed(n));
   const moreActive = moreItems.some(n => n.id === page);
 
   const navButton = (item: NavItem) => (
@@ -130,7 +141,7 @@ export default function Shell({ page, setPage, title, children }: Props) {
         {NAV_GROUPS.map(g => (
           <div key={g.title} className="nav-group">
             <div className="nav-group-title">{g.title}</div>
-            {g.items.map(navButton)}
+            {g.items.filter(allowed).map(navButton)}
           </div>
         ))}
       </aside>
@@ -165,18 +176,20 @@ export default function Shell({ page, setPage, title, children }: Props) {
         </div>
       )}
 
+      {offline && <div className="offline-bar">Немає інтернету — показуємо збережене</div>}
       <TopToast onOpen={t => openNotification(t)} />
 
       <nav className="mobile-nav">
-        {/* Scan sits in the middle as a round button: the one action buyers need most. */}
-        {/* Market · Scanner · [Create NFT] · Inbox · Profile; the feed opens from the market. */}
-        {(['home', 'scan', 'create', 'notifications', 'profile'] as PageId[]).map(id => {
+        {/* Creators: Market · Scanner · [Create NFT] · Inbox · Profile. Everyone else:
+            Home · Wallet · [Scanner] · Inbox · Profile. The feed opens from the market. */}
+        {(canCreate ? ['home', 'scan', 'create', 'notifications', 'profile'] as PageId[] : ['home', 'wallet', 'scan', 'notifications', 'profile'] as PageId[]).map(id => {
           const item = ALL_NAV.find(i => i.id === id)!;
-          const label = id === 'notifications' ? 'Вхідні' : id === 'create' ? 'Створити' : (item.short ?? item.label);
+          const label = id === 'notifications' ? 'Вхідні' : id === 'create' ? 'Створити' : id === 'home' && !canCreate ? 'Головна' : (item.short ?? item.label);
+          const fab = id === (canCreate ? 'create' : 'scan');
           return (
             <button
               key={id}
-              className={`nav-item ${id === 'create' ? 'nav-fab' : ''} ${page === id ? 'active' : ''}`}
+              className={`nav-item ${fab ? 'nav-fab' : ''} ${page === id ? 'active' : ''}`}
               onClick={() => go(id)}
             >
               <span className="ic">{item.icon}</span>

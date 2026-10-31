@@ -27,6 +27,11 @@ export function loadPosts(force = false): Promise<Post[]> {
   return inflight;
 }
 
+/** Something new was made: the next load asks the server. */
+export function invalidatePosts() {
+  cache = cache && { ...cache, at: 0 };
+}
+
 /** Keeps the shared copy in step after a like or a comment. */
 export function rememberPost(p: Post) {
   if (cache) cache = { ...cache, posts: cache.posts.map(x => (x.id === p.id ? p : x)) };

@@ -20,6 +20,7 @@ import ShareProfile, { profileUrl } from '../ShareProfile';
 import type { PageId } from '../Shell';
 import { GridSkeleton } from '../Skeleton';
 import { getTheme, setTheme, type ThemeChoice } from '../theme';
+import { useCanCreate } from '../access';
 import { postImage, postTitle } from './market';
 
 type Tab = 'collections' | 'saved' | 'likes' | 'reposts';
@@ -53,6 +54,7 @@ export function groupNfts<T extends NftLike>(nfts: T[]) {
 /** Profile in the TikTok layout: identity and stats on top, content tabs below. */
 export default function ProfilePage({ onJumpTo }: { onJumpTo: (p: PageId) => void }) {
   const { user, reload } = useAuth();
+  const canCreate = useCanCreate();
   const [tab, setTab] = useState<Tab>('collections');
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -125,7 +127,7 @@ export default function ProfilePage({ onJumpTo }: { onJumpTo: (p: PageId) => voi
         : <button className="ph-bio empty" onClick={() => setEditing(true)}>+ Додати біографію</button>}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-        <button className="btn btn-primary" onClick={() => onJumpTo('create')}><Icon.Plus /> Створити NFT</button>
+        {canCreate && <button className="btn btn-primary" onClick={() => onJumpTo('create')}><Icon.Plus /> Створити NFT</button>}
         <button className="btn" onClick={() => setSharing(true)}><Icon.QrCode /> Поділитися профілем</button>
       </div>
 
@@ -318,6 +320,7 @@ function EditField({ field, initial, onClose }: { field: Field; initial: string;
 /** ☰ menu as a right-side drawer: profile card, shortcuts, settings, sign out. */
 function MenuSheet({ onClose, onJumpTo }: { onClose: () => void; onJumpTo: (p: PageId) => void }) {
   const { user, logout } = useAuth();
+  const canCreate = useCanCreate();
   const [view, setView] = useState<'menu' | 'settings'>('menu');
   const [theme, setThemeState] = useState<ThemeChoice>(getTheme);
   const [pwOpen, setPwOpen] = useState(false);
@@ -381,9 +384,9 @@ function MenuSheet({ onClose, onJumpTo }: { onClose: () => void; onJumpTo: (p: P
               </div>
             </div>
 
-            <div className="drawer-caption">Створення</div>
+            <div className="drawer-caption">{canCreate ? 'Створення' : 'Моє'}</div>
             <div className="drawer-group">
-              {item(<Icon.Plus />, 'Створити NFT', 'Паспорт для твоєї речі', () => onJumpTo('create'))}
+              {canCreate && item(<Icon.Plus />, 'Створити NFT', 'Паспорт для твоєї речі', () => onJumpTo('create'))}
               {item(<Icon.Box />, 'Мої паспорти', null, () => onJumpTo('nfts'))}
               {item(<Icon.Truck />, 'Замовлення', 'Доставка й оплата при отриманні', () => onJumpTo('orders'))}
               {item(<Icon.Box />, 'Мої товари', 'Зареєстровані за чеком', () => onJumpTo('goods'))}
@@ -395,7 +398,7 @@ function MenuSheet({ onClose, onJumpTo }: { onClose: () => void; onJumpTo: (p: P
               {item(<Icon.Wallet />, 'Мій гаманець', user!.icpWalletKind === 'ii'
                 ? `Internet Identity · ${user!.icpPrincipal!.slice(0, 5)}…${user!.icpPrincipal!.slice(-3)}`
                 : 'Створіть свій — NFT будуть тільки ваші', () => onJumpTo('wallet'))}
-              {item(<Icon.Tag />, 'Тарифи', 'Пакети мінтів у блокчейні ICP', () => onJumpTo('plans'))}
+              {canCreate && item(<Icon.Tag />, 'Тарифи', 'Пакети мінтів у блокчейні ICP', () => onJumpTo('plans'))}
             </div>
 
             <div className="drawer-caption">Статистика</div>
