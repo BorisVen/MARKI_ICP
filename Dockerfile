@@ -2,7 +2,7 @@
 # Используем multi-stage build для минимального размера образа
 
 # Stage 1: Builder
-FROM rust:1.75-slim-bookworm AS builder
+FROM rust:1.90-slim-bookworm AS builder
 
 WORKDIR /app
 
