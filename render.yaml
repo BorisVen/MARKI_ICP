@@ -2,8 +2,9 @@ services:
   - type: web
     name: idenity-api
     runtime: docker
-    plan: standard
-    branch: master
+    region: frankfurt
+    plan: starter
+    branch: main
     envVars:
       - key: RUST_LOG
         value: info
