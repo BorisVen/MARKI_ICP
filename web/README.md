@@ -28,7 +28,7 @@ npm run dev                  # http://localhost:3002
 
 | Змінна | Призначення |
 |---|---|
-| `VITE_API_BASE_URL` | Rust API (`idenity/api`), напр. `https://idenity.onrender.com` |
+| `VITE_API_BASE_URL` | Rust API (`idenity/api`), напр. `https://marki-gj28.onrender.com` |
 | `VITE_FIREBASE_*` | Firebase Auth (той самий проєкт, що й у кабінету компаній) |
 
 ## Скрипти
